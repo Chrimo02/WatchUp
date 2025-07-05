@@ -1,0 +1,71 @@
+import AddToBookmark from "../assets/AddToBookmark.svg";
+import Bookmarked from "../assets/Bookmarked.svg";
+import Star from "../assets/Star.svg";
+
+export default function SimpleMovieCard({
+  poster,
+  title,
+  score,
+  bookmarked,
+  isLoading = false,
+  onBookmarkToggle,
+}) {
+  const handleBookmarkClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLoading) return; // Prevent clicking when loading
+    
+    onBookmarkToggle();
+  };
+
+  return (
+    <div className="relative w-[188px] h-[312px] group">
+      <img
+        src={poster}
+        alt={title}
+        className="w-full h-[281px] object-cover rounded-[10px]"
+        onError={(e) => {
+          e.target.src = '/placeholder-poster.jpg';
+        }}
+      />
+
+      {/* Bookmark Button */}
+      <div
+        onClick={handleBookmarkClick}
+        className={`absolute left-[9px] top-0 w-[34px] h-[45px] z-10 ${
+          isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-110'
+        } transition-all duration-200`}
+      >
+        {isLoading ? (
+          <div className="w-[34px] h-[45px] flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <img
+            src={bookmarked ? Bookmarked : AddToBookmark}
+            alt={bookmarked ? "Bookmarked" : "Add to Bookmark"}
+            className="w-[34px] h-[45px] block object-cover"
+          />
+        )}
+      </div>
+
+      {/* Rating Badge */}
+      <div className="absolute right-[5px] top-[5px] flex items-center gap-0.5 px-1 py-0.5 rounded-[10px] bg-black/80">
+        <img
+          src={Star}
+          alt="Star"
+          className="w-[11px] h-[11px]"
+        />
+        <span className="text-white text-base leading-6 font-normal">
+          {score}
+        </span>
+      </div>
+
+      {/* Movie Title */}
+      <h3 className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[138px] h-[23px] text-white text-center text-[15px] font-semibold leading-6 truncate">
+        {title}
+      </h3>
+    </div>
+  );
+}
