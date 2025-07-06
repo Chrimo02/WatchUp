@@ -13,9 +13,11 @@ import {
   getTVShowVideos,
   searchTVShows,
   discoverTVShows,
-  getWatchlistMovies,
-  getWatchlistTVShows,
-  addToWatchlist
+  addToWatchlist,
+  getUpcomingMoviesWithVideos,
+  getMovieAccountStates,
+  getTVShowAccountStates,
+  getBatchAccountStates
 } from '../utils/api';
 
 const MovieContext = createContext({
@@ -28,8 +30,8 @@ const MovieContext = createContext({
   topRatedTVShows: [],
   airingTodayTVShows: [],
   genres: [],
-  watchlistMovies: [],
-  watchlistTVShows: [],
+  upcomingMoviesWithTrailers: [],
+  accountStates: {}, // New: cache for account states
   fetchTrendingMovies: async () => {},
   fetchPopularMovies: async () => {},
   fetchTopRatedMovies: async () => {},
@@ -47,12 +49,13 @@ const MovieContext = createContext({
   discoverMoviesByFilter: async () => ({}),
   discoverTVShowsByFilter: async () => ({}),
   fetchGenres: async () => {},
-  fetchWatchlistMovies: async () => {},
-  fetchWatchlistTVShows: async () => {},
   toggleWatchlist: async () => {},
+  getAccountStates: async () => ({}),
+  getBatchAccountStates: async () => ({}),
   isInWatchlist: () => false,
   getRandomMovie: () => ({}),
   getRandomTVShow: () => ({}),
+  fetchUpcomingMoviesWithTrailers: async () => {},
 });
 
 export const useMovies = () => useContext(MovieContext);
@@ -67,8 +70,11 @@ export const MovieProvider = ({ children }) => {
   const [topRatedTVShows, setTopRatedTVShows] = useState([]);
   const [airingTodayTVShows, setAiringTodayTVShows] = useState([]);
   const [genres, setGenres] = useState([]);
-  const [watchlistMovies, setWatchlistMovies] = useState([]);
-  const [watchlistTVShows, setWatchlistTVShows] = useState([]);
+  const [upcomingMoviesWithTrailers, setUpcomingMoviesWithTrailers] = useState([]);
+  const [accountStates, setAccountStates] = useState({}); // Cache for account states
+
+  // Helper function to get cache key
+  const getCacheKey = (mediaId, mediaType) => `${mediaType}_${mediaId}`;
 
   const fetchTrendingMovies = async (timeWindow = 'day') => {
     setLoading(true);
@@ -154,25 +160,70 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchWatchlistMovies = async (accountId, sessionId) => {
+  // New function to get account states for a single item
+  const getAccountStates = async (mediaId, mediaType, sessionId) => {
+    const cacheKey = getCacheKey(mediaId, mediaType);
+    
+    // Return cached result if available
+    if (accountStates[cacheKey]) {
+      return accountStates[cacheKey];
+    }
+
     try {
-      const { data } = await getWatchlistMovies(accountId, sessionId);
-      setWatchlistMovies(data.results || []);
-      console.log('Fetched watchlist movies:', data.results);
-    } catch (err) {
-      console.error('Failed to fetch watchlist movies:', err);
-      setWatchlistMovies([]);
+      const response = mediaType === 'movie' || mediaType === 'film'
+        ? await getMovieAccountStates(mediaId, sessionId)
+        : await getTVShowAccountStates(mediaId, sessionId);
+      
+      const states = response.data;
+      
+      // Cache the result
+      setAccountStates(prev => ({
+        ...prev,
+        [cacheKey]: states
+      }));
+      
+      return states;
+    } catch (error) {
+      console.error(`Failed to get account states for ${mediaType} ${mediaId}:`, error);
+      // Return default states on error
+      const defaultStates = { watchlist: false, favorite: false, rated: false };
+      
+      // Cache the default states to avoid repeated failed requests
+      setAccountStates(prev => ({
+        ...prev,
+        [cacheKey]: defaultStates
+      }));
+      
+      return defaultStates;
     }
   };
 
-  const fetchWatchlistTVShows = async (accountId, sessionId) => {
+  // New function to get account states for multiple items
+  const getBatchAccountStatesForItems = async (items, sessionId) => {
+    // Filter out items that are already cached
+    const uncachedItems = items.filter(item => {
+      const cacheKey = getCacheKey(item.id, item.type);
+      return !accountStates[cacheKey];
+    });
+
+    if (uncachedItems.length === 0) {
+      // All items are cached, return current cache
+      return accountStates;
+    }
+
     try {
-      const { data } = await getWatchlistTVShows(accountId, sessionId);
-      setWatchlistTVShows(data.results || []);
-      console.log('Fetched watchlist TV shows:', data.results);
-    } catch (err) {
-      console.error('Failed to fetch watchlist TV shows:', err);
-      setWatchlistTVShows([]);
+      const newStates = await getBatchAccountStates(uncachedItems, sessionId);
+      
+      // Merge with existing cache
+      setAccountStates(prev => ({
+        ...prev,
+        ...newStates
+      }));
+      
+      return { ...accountStates, ...newStates };
+    } catch (error) {
+      console.error('Failed to get batch account states:', error);
+      return accountStates;
     }
   };
 
@@ -185,40 +236,15 @@ export const MovieProvider = ({ children }) => {
       // Make API call
       await addToWatchlist(accountId, sessionId, mediaId, mediaType, shouldAdd);
       
-      // Update local state immediately for better UX
-      if (mediaType === 'movie') {
-        if (shouldAdd) {
-          // Add movie to local watchlist state
-          // We need to create a movie object - for now we'll just use the id
-          // In a real app, you might want to fetch the movie details
-          const movieToAdd = { id: mediaId };
-          setWatchlistMovies(prev => {
-            // Check if it's already in the list
-            if (prev.some(movie => movie.id === mediaId)) {
-              return prev;
-            }
-            return [...prev, movieToAdd];
-          });
-        } else {
-          // Remove movie from local watchlist state
-          setWatchlistMovies(prev => prev.filter(movie => movie.id !== mediaId));
+      // Update cached account states immediately
+      const cacheKey = getCacheKey(mediaId, mediaType);
+      setAccountStates(prev => ({
+        ...prev,
+        [cacheKey]: {
+          ...prev[cacheKey],
+          watchlist: shouldAdd
         }
-      } else if (mediaType === 'tv') {
-        if (shouldAdd) {
-          // Add TV show to local watchlist state
-          const tvShowToAdd = { id: mediaId };
-          setWatchlistTVShows(prev => {
-            // Check if it's already in the list
-            if (prev.some(show => show.id === mediaId)) {
-              return prev;
-            }
-            return [...prev, tvShowToAdd];
-          });
-        } else {
-          // Remove TV show from local watchlist state
-          setWatchlistTVShows(prev => prev.filter(show => show.id !== mediaId));
-        }
-      }
+      }));
       
       console.log(`Successfully toggled watchlist for ${mediaType} ${mediaId}`);
       return true;
@@ -229,13 +255,9 @@ export const MovieProvider = ({ children }) => {
   };
 
   const isInWatchlist = useCallback((mediaId, mediaType) => {
-    if (mediaType === 'movie') {
-      return watchlistMovies.some(movie => movie.id === mediaId);
-    } else if (mediaType === 'tv' || mediaType === 'series') {
-      return watchlistTVShows.some(show => show.id === mediaId);
-    }
-    return false;
-  }, [watchlistMovies, watchlistTVShows]);
+    const cacheKey = getCacheKey(mediaId, mediaType);
+    return accountStates[cacheKey]?.watchlist || false;
+  }, [accountStates]);
 
   const fetchMovieDetails = async (movieId) => {
     setLoading(true);
@@ -392,6 +414,22 @@ export const MovieProvider = ({ children }) => {
     return null;
   }, [popularTVShows]);
 
+  const fetchUpcomingMoviesWithTrailers = async (page = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getUpcomingMoviesWithVideos(page);
+      setUpcomingMoviesWithTrailers(data.results);
+      return data.results;
+    } catch (err) {
+      setError('Failed to fetch upcoming movies with trailers');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <MovieContext.Provider
       value={{
@@ -404,8 +442,8 @@ export const MovieProvider = ({ children }) => {
         topRatedTVShows,
         airingTodayTVShows,
         genres,
-        watchlistMovies,
-        watchlistTVShows,
+        upcomingMoviesWithTrailers,
+        accountStates,
         fetchTrendingMovies,
         fetchPopularMovies,
         fetchTopRatedMovies,
@@ -423,12 +461,13 @@ export const MovieProvider = ({ children }) => {
         discoverMoviesByFilter,
         discoverTVShowsByFilter,
         fetchGenres,
-        fetchWatchlistMovies,
-        fetchWatchlistTVShows,
         toggleWatchlist,
+        getAccountStates,
+        getBatchAccountStates: getBatchAccountStatesForItems,
         isInWatchlist,
         getRandomMovie,
         getRandomTVShow,
+        fetchUpcomingMoviesWithTrailers,
       }}
     >
       {children}

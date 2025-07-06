@@ -1,3 +1,4 @@
+import React from 'react';
 import AddToBookmark from "../assets/AddToBookmark.svg";
 import Bookmarked from "../assets/Bookmarked.svg";
 import Star from "../assets/Star.svg";
@@ -9,6 +10,8 @@ export default function SimpleMovieCard({
   bookmarked,
   isLoading = false,
   onBookmarkToggle,
+  id,
+  type
 }) {
   const handleBookmarkClick = (e) => {
     e.preventDefault();
@@ -16,7 +19,7 @@ export default function SimpleMovieCard({
     
     if (isLoading) return; // Prevent clicking when loading
     
-    onBookmarkToggle();
+    onBookmarkToggle(id, type);
   };
 
   return (

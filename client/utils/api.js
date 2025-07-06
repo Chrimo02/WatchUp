@@ -170,6 +170,95 @@ export const getBackdropUrl = (path, size = 'w1280') => {
   if (!path) return '/placeholder-backdrop.jpg';
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
+// Add these new functions to your existing api.js file
+
+// Account states for movies and TV shows
+export const getMovieAccountStates = (movieId, sessionId) => 
+  api.get(`/movie/${movieId}/account_states`, { 
+    params: { session_id: sessionId } 
+  });
+
+export const getTVShowAccountStates = (tvId, sessionId) => 
+  api.get(`/tv/${tvId}/account_states`, { 
+    params: { session_id: sessionId } 
+  });
+
+// Batch function to get account states for multiple items
+export const getBatchAccountStates = async (items, sessionId) => {
+  const accountStates = {};
+  
+  try {
+    const promises = items.map(async (item) => {
+      try {
+        const response = item.type === 'movie' || item.type === 'film' 
+          ? await getMovieAccountStates(item.id, sessionId)
+          : await getTVShowAccountStates(item.id, sessionId);
+        
+        return {
+          id: item.id,
+          type: item.type,
+          states: response.data
+        };
+      } catch (error) {
+        console.error(`Failed to get account states for ${item.type} ${item.id}:`, error);
+        return {
+          id: item.id,
+          type: item.type,
+          states: { watchlist: false, favorite: false, rated: false }
+        };
+      }
+    });
+
+    const results = await Promise.all(promises);
+    
+    results.forEach(result => {
+      accountStates[`${result.type}_${result.id}`] = result.states;
+    });
+
+    return accountStates;
+  } catch (error) {
+    console.error('Failed to get batch account states:', error);
+    return {};
+  }
+};
+export const getUpcomingMoviesWithVideos = async (page = 1) => {
+  try {
+    const { data } = await api.get('/movie/upcoming', { params: { page } });
+    const moviesWithVideos = await Promise.all(
+      data.results.map(async (movie) => {
+        try {
+          const videosResponse = await getMovieVideos(movie.id);
+          const trailer = videosResponse.data.results.find(
+            video => video.type === 'Trailer' && video.site === 'YouTube'
+          );
+          return {
+            ...movie,
+            youtubeId: trailer ? trailer.key : null,
+            hasTrailer: !!trailer
+          };
+        } catch (error) {
+          console.error(`Failed to fetch videos for movie ${movie.id}:`, error);
+          return {
+            ...movie,
+            youtubeId: null,
+            hasTrailer: false
+          };
+        }
+      })
+    );
+    
+    // Filter out movies without trailers
+    const moviesWithTrailers = moviesWithVideos.filter(movie => movie.hasTrailer);
+    
+    return {
+      ...data,
+      results: moviesWithTrailers
+    };
+  } catch (error) {
+    console.error('Failed to fetch upcoming movies with videos:', error);
+    throw error;
+  }
+};
 
 // Error handling wrapper
 export const handleApiError = (error) => {

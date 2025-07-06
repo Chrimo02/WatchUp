@@ -10,12 +10,12 @@ const MovieSlider = ({
   showViewAll = true,
   onViewAll,
   showTabSwitcher = true,
-  defaultTab = "movies"
+  defaultTab = "movies",
+  bookmarkLoadingStates = new Set() // Accept loading states from parent
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [loadingBookmarks, setLoadingBookmarks] = useState(new Set());
   const scrollContainerRef = useRef(null);
 
   const scrollLeft = () => {
@@ -40,32 +40,20 @@ const MovieSlider = ({
 
   const switchTab = (tab) => {
     setActiveTab(tab);
+    // Reset scroll position when switching tabs
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
+    }
   };
 
   const handleBookmarkToggle = async (itemId, itemType) => {
     console.log(`Bookmark toggle initiated for ${itemType} ${itemId}`);
-    
-    // Add to loading set
-    setLoadingBookmarks(prev => {
-      const newSet = new Set(prev);
-      newSet.add(itemId);
-      return newSet;
-    });
     
     try {
       await onBookmarkToggle(itemId, itemType);
       console.log(`Bookmark toggle completed for ${itemType} ${itemId}`);
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
-    } finally {
-      // Remove from loading set after a short delay to ensure state updates
-      setTimeout(() => {
-        setLoadingBookmarks(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      }, 500);
     }
   };
 
@@ -191,12 +179,14 @@ const MovieSlider = ({
           {currentItems.map((item) => (
             <div key={`${item.type}-${item.id}`} className="flex-shrink-0">
               <SimpleMovieCard
+                id={item.id}
+                type={item.type}
                 poster={item.poster}
                 title={item.title}
                 score={item.score}
                 bookmarked={item.bookmarked}
-                isLoading={loadingBookmarks.has(item.id)}
-                onBookmarkToggle={() => handleBookmarkToggle(item.id, item.type)}
+                isLoading={bookmarkLoadingStates.has(item.id)}
+                onBookmarkToggle={handleBookmarkToggle}
               />
             </div>
           ))}
