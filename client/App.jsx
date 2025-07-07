@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Layout from './components/Layout';
+import ComponentTestPage from "./pages/ComponentTestPage.jsx";
 
 import { useAuth } from './contexts/AuthContext';
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<Layout />} >
             <Route index element={<HomePage />} />
             <Route path="*" element={<NotFound />} />
+            <Route path="ComponentTestPage" element={<ComponentTestPage />} />
           </Route>
         </Routes>
   );
