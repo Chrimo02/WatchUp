@@ -1,9 +1,10 @@
-import { TopBanner } from "../components/TopBanner";
+import AdvancedSearch from "../components/AdvancedSearch";
+
 
 
 const ComponentTestPage = () => {
   return (
-        <TopBanner />
+        <AdvancedSearch />
   );
 };
 
