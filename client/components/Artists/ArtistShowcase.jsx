@@ -1,8 +1,14 @@
 import stageBg from "../../assets/stage.png";
+import profilePlaceholder from "../../assets/placeholder-profile.png";
+import { useState } from "react";
+
 export default function ArtistShowcase({
   portraitSrc,
-  portraitAlt = "Artist portrait",
+  portraitAlt = profilePlaceholder,
 }) {
+
+  const [src, setSrc] = useState(portraitSrc || profilePlaceholder);
+
   return (
     <div className="w-full max-w-[280px] mx-auto">
       {/* Main container with aspect ratio preservation */}
@@ -90,9 +96,15 @@ export default function ArtistShowcase({
         {/* Artist portrait - repositioned */}
         <div className="absolute top-[27.14%] left-[23.22%] w-[48.12%] aspect-[2/3]">
           <img
-            src={portraitSrc}
+            src={src}
             alt={portraitAlt}
             className="w-full h-full object-cover rounded-[4.35%]"
+            onError={() => {
+              // if the img 404s or portraitSrc was falsy, swap to placeholder
+              if (src !== profilePlaceholder) {
+                setSrc(profilePlaceholder);
+              }
+            }}
           />
         </div>
       </div>

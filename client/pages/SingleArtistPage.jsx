@@ -8,6 +8,7 @@ import MovieSlider from '../components/MovieSlider';
 import CreditsListGrid from '../components/Artists/CreditsListGrid';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
+import profilePlaceholder from '../assets/placeholder-profile.png';
 
 const API_KEY    = import.meta.env.VITE_TMDB_API_KEY;
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -183,7 +184,7 @@ export default function SingleArtistPage() {
             portraitSrc={
               person.profile_path
                 ? `${IMAGE_BASE}/w500${person.profile_path}`
-                : '/assets/placeholder-profile.jpg'
+                : profilePlaceholder
             }
           />
           <PersonalInfoCard info={personalInfo} />
@@ -198,7 +199,7 @@ export default function SingleArtistPage() {
                 showFullBio ? 'max-h-full' : 'max-h-64'
               }`}
             >
-              {person.biography}
+              {person.biography ? person.biography : "Sorry, no bio available for this person."}
             </div>
             {bioOverflow && (
               <button
