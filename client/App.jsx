@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import HomePage from "./pages/HomePage.jsx";
+import MyListsPage from "./pages/MyListsPage.jsx"
 import NotFound from "./pages/NotFound.jsx";
 import Layout from './components/Layout';
 
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />} >
             <Route index element={<HomePage />} />
+            <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
