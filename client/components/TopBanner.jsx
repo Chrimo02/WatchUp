@@ -37,6 +37,13 @@ function TopBanner() {
         <div className="flex items-center gap-6 flex-wrap ml-7">
 
 
+          <div className="relative">
+            <text className="flex items-center justify-between w-33 h-10 px-4 py-2 bg-movie-card rounded-xl text-movie-text text-sm font-bold">
+              1 - 50 of 950 titles 
+              </text>
+          </div>
+
+          
           {/* Filter Genres */}
           <div className="relative">
             <button
@@ -151,7 +158,7 @@ function TopBanner() {
               </svg>
             </button>
           </div>
-          </div>
+        </div>
       </div>
 
 

@@ -1,10 +1,10 @@
-import AdvancedSearch from "../components/AdvancedSearch";
+import TestComponent from "../components/AdvancedSearch";
 
 
 
 const ComponentTestPage = () => {
   return (
-        <AdvancedSearch />
+        <TestComponent/>
   );
 };
 
