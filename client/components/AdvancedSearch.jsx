@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { useAuth } from '../contexts/AuthContext';
 
 function AdvancedSearch() {
     const [selectedType, setSelectedType] = useState("all");
-    const [watchlistFilter, setWatchlistFilter] = useState ("all");
-    const [ratingsFilter, setRatingsFilter] = useState ("all");
+    const [watchlistFilter, setWatchlistFilter] = useState("all");
+    const [ratingsFilter, setRatingsFilter] = useState("all");
+    const { isAuthenticated} = useAuth();
 
-        //Hier unsicher falls was net geht noch ChatGPT fragen
+    //Hier unsicher falls was net geht noch ChatGPT fragen
     const [scoreRange, setScoreRange] = useState([0, 10]);
     const [runtimeRange, setRuntimeRange] = useState([0, 360]);
     const [fromYear, setFromYear] = useState("");
@@ -159,37 +161,38 @@ function AdvancedSearch() {
                                 />
 
                                 {/* Watchlist */}
-                                <div className="w-full bg-movie-card rounded-[10px] p-[16px]">
-                                    <div className="mb-[10px]">
-                                        <span className="text-movie-text text-[14px]">
-                                            Watchlist
-                                        </span>
+                                {isAuthenticated && (
+                                    <div className="w-full bg-movie-card rounded-[10px] p-[16px]">
+                                        <div className="mb-[10px]">
+                                            <span className="text-movie-text text-[14px]">
+                                                Watchlist
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-[8px]">
+                                            <RadioOption
+                                                value="all"
+                                                currentValue={watchlistFilter}
+                                                onChange={(value) => setWatchlistFilter(value)}
+                                            >
+                                                All
+                                            </RadioOption>
+                                            <RadioOption
+                                                value="in"
+                                                currentValue={watchlistFilter}
+                                                onChange={(value) => setWatchlistFilter(value)}
+                                            >
+                                                In watchlist
+                                            </RadioOption>
+                                            <RadioOption
+                                                value="not"
+                                                currentValue={watchlistFilter}
+                                                onChange={(value) => setWatchlistFilter(value)}
+                                            >
+                                                Not in watchlist
+                                            </RadioOption>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-[8px]">
-                                        <RadioOption
-                                            value="all"
-                                            currentValue={watchlistFilter}
-                                            onChange={(value) => setWatchlistFilter(value)}
-                                        >
-                                            All
-                                        </RadioOption>
-                                        <RadioOption
-                                            value="in"
-                                            currentValue={watchlistFilter}
-                                            onChange={(value) => setWatchlistFilter(value)}
-                                        >
-                                            In watchlist
-                                        </RadioOption>
-                                        <RadioOption
-                                            value="not"
-                                            currentValue={watchlistFilter}
-                                            onChange={(value) => setWatchlistFilter(value)}
-                                        >
-                                            Not in watchlist
-                                        </RadioOption>
-                                    </div>
-                                </div>
-
+                                )}
                                 {/* From Year */}
                                 <div className="w-full">
                                     <Input
@@ -251,35 +254,36 @@ function AdvancedSearch() {
                                 />
 
                                 {/* Ratings */}
-                                <div className="w-full bg-movie-card rounded-[10px] p-[16px]">
-                                    <div className="mb-[10px]">
-                                        <span className="text-movie-text text-[14px]">Ratings</span>
+                                {isAuthenticated && (
+                                    <div className="w-full bg-movie-card rounded-[10px] p-[16px]">
+                                        <div className="mb-[10px]">
+                                            <span className="text-movie-text text-[14px]">Ratings</span>
+                                        </div>
+                                        <div className="flex items-center gap-[8px]">
+                                            <RadioOption
+                                                value="all"
+                                                currentValue={ratingsFilter}
+                                                onChange={(value) => setRatingsFilter(value)}
+                                            >
+                                                All
+                                            </RadioOption>
+                                            <RadioOption
+                                                value="rated"
+                                                currentValue={ratingsFilter}
+                                                onChange={(value) => setRatingsFilter(value)}
+                                            >
+                                                Titles I rated
+                                            </RadioOption>
+                                            <RadioOption
+                                                value="notRated"
+                                                currentValue={ratingsFilter}
+                                                onChange={(value) => setRatingsFilter(value)}
+                                            >
+                                                Titles I didn't rate
+                                            </RadioOption>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-[8px]">
-                                        <RadioOption
-                                            value="all"
-                                            currentValue={ratingsFilter}
-                                            onChange={(value) => setRatingsFilter(value)}
-                                        >
-                                            All
-                                        </RadioOption>
-                                        <RadioOption
-                                            value="rated"
-                                            currentValue={ratingsFilter}
-                                            onChange={(value) => setRatingsFilter(value)}
-                                        >
-                                            Titles I rated
-                                        </RadioOption>
-                                        <RadioOption
-                                            value="notRated"
-                                            currentValue={ratingsFilter}
-                                            onChange={(value) => setRatingsFilter(value)}
-                                        >
-                                            Titles I didn't rate
-                                        </RadioOption>
-                                    </div>
-                                </div>
-
+                                )}
                                 {/* To Year */}
                                 <div className="w-full">
                                     <Input

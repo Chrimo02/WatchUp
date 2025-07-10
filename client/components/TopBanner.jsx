@@ -23,7 +23,9 @@ function TopBanner() {
     <div
       className="relative w-screen h-[250px] flex flex-col items-center justify-between bg-movie-dark font-sans"
       style={{
-        backgroundImage: ` linear-gradient(to top, #141414, rgba(68,68,68,0.27)), url(${seatsImg})`,
+        backgroundImage: `linear-gradient(to top, #141414, rgba(68,68,68,0.27)), url(${seatsImg})`,
+        backgroundSize: 'cover', // Bild strecken/füllen
+        backgroundRepeat: 'no-repeat', // kein Kacheln
       }}
     >
 
@@ -33,17 +35,17 @@ function TopBanner() {
       </h1>
 
 
-      <div className="relative w-screen max-w-7xl flex justify-between mb-6">
+      <div className="relative w-screen flex justify-between mb-6">
         <div className="flex items-center gap-6 flex-wrap ml-7">
 
 
           <div className="relative">
             <text className="flex items-center justify-between w-33 h-10 px-4 py-2 bg-movie-card rounded-xl text-movie-text text-sm font-bold">
-              1 - 50 of 950 titles 
-              </text>
+              1 - 50 of 950 titles
+            </text>
           </div>
 
-          
+
           {/* Filter Genres */}
           <div className="relative">
             <button
