@@ -3,6 +3,8 @@ import Navbar from "./components/Navbar.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Layout from './components/Layout';
+import ComponentTestPage from "./pages/ComponentTestPage.jsx";
+import SeasonPage from "./pages/SeasonPage.jsx";
 
 import { useAuth } from './contexts/AuthContext';
 
@@ -18,13 +20,16 @@ function App() {
     );
   }
   return (
-        <Routes>
-          <Route path="/" element={<Layout />} >
-            <Route index element={<HomePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-  );
+    <Routes>
+    <Route path="/" element={<Layout />} >
+      <Route index element={<HomePage />} />
+      <Route path="component-test" element={<ComponentTestPage />} />
+      {/* <Route path="season-page" element={<SeasonPage />} /> */}
+      <Route path="series/:tvId/season/:seasonNumber" element={<SeasonPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Route>
+  </Routes>);
+
 }
 
 export default App;
