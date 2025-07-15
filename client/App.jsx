@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import SingleArtistPage from "./pages/SingleArtistPage.jsx"; 
 import PopularPeople from "./pages/PopularPeople.jsx";
 
+
 import { useAuth } from './contexts/AuthContext';
 
 
