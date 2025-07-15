@@ -1,4 +1,3 @@
-// src/pages/SingleArtistPage.jsx
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import FilterTabs from '../components/Artists/FilterTabs';
@@ -8,55 +7,49 @@ import MovieSlider from '../components/MovieSlider';
 import CreditsListGrid from '../components/Artists/CreditsListGrid';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerson } from '../contexts/PersonContext';
 import profilePlaceholder from '../assets/placeholder-profile.png';
 
-const API_KEY    = import.meta.env.VITE_TMDB_API_KEY;
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export default function SingleArtistPage() {
   const { id } = useParams();
   const { isAuthenticated, user, sessionId, login } = useAuth();
   const { toggleWatchlist, isInWatchlist } = useMovies();
+  const {
+    loading,
+    error,
+    person,
+    credits,
+    fetchPersonAndCredits,
+    clearPerson,
+  } = usePerson();
 
-  const [person, setPerson]   = useState(null);
-  const [credits, setCredits] = useState({ cast: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
-
-  const [filter, setFilter]           = useState('movies');
-  const [sortOption, setSortOption]   = useState('date_desc');
+  const [filter, setFilter] = useState('movies');
+  const [sortOption, setSortOption] = useState('date_desc');
   const [showFullBio, setShowFullBio] = useState(false);
   const [bioOverflow, setBioOverflow] = useState(false);
-  const bioRef                        = useRef(null);
+  const bioRef = useRef(null);
 
-  // Fetch person + credits
   useEffect(() => {
-    async function loadArtist() {
-      setLoading(true);
-      try {
-        const [pRes, cRes] = await Promise.all([
-          fetch(`https://api.themoviedb.org/3/person/${id}?api_key=${API_KEY}&language=en-US`),
-          fetch(`https://api.themoviedb.org/3/person/${id}/combined_credits?api_key=${API_KEY}&language=en-US`)
-        ]);
-        if (!pRes.ok || !cRes.ok) throw new Error();
-        setPerson(await pRes.json());
-        setCredits(await cRes.json());
-      } catch {
-        setError('Could not load artist data.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadArtist();
-  }, [id]);
+    fetchPersonAndCredits(id);
+    return () => clearPerson();
+  }, [id, fetchPersonAndCredits, clearPerson]);
 
-  // Detect overflow in biography
+  // **WICHTIG: Overflow immer an gekürzter Ansicht messen**
   useEffect(() => {
-    const el = bioRef.current;
-    if (el && el.scrollHeight > el.clientHeight) {
-      setBioOverflow(true);
-    }
-  }, [person, showFullBio]);
+    const checkOverflow = () => {
+      const el = bioRef.current;
+      if (!el) return setBioOverflow(false);
+      // Temporär max-h-64 für Overflow-Check, egal ob aufgeklappt!
+      const prevMaxHeight = el.style.maxHeight;
+      el.style.maxHeight = '16rem'; // 64*0.25rem = 16rem (max-h-64)
+      const overflowed = el.scrollHeight > el.clientHeight + 1;
+      el.style.maxHeight = prevMaxHeight;
+      setBioOverflow(overflowed);
+    };
+    checkOverflow();
+  }, [person]);
 
   const handleBookmark = async (itemId, itemType) => {
     if (!isAuthenticated) {
@@ -72,82 +65,124 @@ export default function SingleArtistPage() {
     );
   };
 
-  // Prepare "Known For" lists
-  const knownForMovies = credits.cast
-    .filter(c => c.media_type === 'movie' && c.poster_path)
-    .sort((a,b)=>b.popularity-a.popularity).slice(0,10)
-    .map(item => ({
-      id: item.id,
-      title: item.title || item.name,
-      poster: `${IMAGE_BASE}/w342${item.poster_path}`,
-      score: item.vote_average?.toFixed(1) || '–',
-      bookmarked: isInWatchlist(item.id, 'movie'),
-      type: 'movie'
-    }));
-  const knownForTV = credits.cast
-    .filter(c => c.media_type === 'tv' && c.poster_path)
-    .sort((a,b)=>b.popularity-a.popularity).slice(0,10)
-    .map(item => ({
-      id: item.id,
-      title: item.name,
-      poster: `${IMAGE_BASE}/w342${item.poster_path}`,
-      score: item.vote_average?.toFixed(1) || '–',
-      bookmarked: isInWatchlist(item.id, 'tv'),
-      type: 'tv'
-    }));
+  // "Known For" Listen, deduped by id + type
+  const knownForSet = new Set();
+  const knownForMovies = useMemo(() =>
+    (credits?.cast || [])
+      .filter(c => c.media_type === 'movie' && c.poster_path)
+      .filter(item => {
+        const key = `movie-${item.id}`;
+        if (knownForSet.has(key)) return false;
+        knownForSet.add(key);
+        return true;
+      })
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 10)
+      .map(item => ({
+        id: item.id,
+        title: item.title || item.name,
+        poster: `${IMAGE_BASE}/w342${item.poster_path}`,
+        score: item.vote_average?.toFixed(1) || '–',
+        bookmarked: isInWatchlist(item.id, 'movie'),
+        type: 'movie',
+      }))
+    , [credits, isInWatchlist]
+  );
 
-  // Full filmography
-  const moviesActors = credits.cast
-    .filter(c => c.media_type === 'movie')
-    .map(item => ({
-      id: item.id,
-      title: item.title,
-      poster: item.poster_path
-        ? `${IMAGE_BASE}/w185${item.poster_path}`
-        : '/placeholder-poster.jpg',
-      rating: item.vote_average?.toFixed(1) || '–',
-      yearsValue: item.release_date?.slice(0,4) || '–',
-      characterValue: item.character || '–',
-      date: item.release_date?.slice(0,4) || '0',
-      score: item.vote_average?.toFixed(1) || '–',
-      bookmarked: isInWatchlist(item.id, 'movie'),
-      type: 'movie'
-    }));
-  const tvActors = credits.cast
-    .filter(c => c.media_type === 'tv')
-    .map(item => ({
-      id: item.id,
-      title: item.name,
-      poster: item.poster_path
-        ? `${IMAGE_BASE}/w185${item.poster_path}`
-        : '/placeholder-poster.jpg',
-      rating: item.vote_average?.toFixed(1) || '–',
-      yearsValue: item.first_air_date?.slice(0,4) || '–',
-      characterValue: item.character || '–',
-      date: item.first_air_date?.slice(0,4) || '0',
-      score: item.vote_average?.toFixed(1) || '–',
-      bookmarked: isInWatchlist(item.id, 'tv'),
-      type: 'tv'
-    }));
+  const knownForTV = useMemo(() => {
+    const set = new Set();
+    return (credits?.cast || [])
+      .filter(c => c.media_type === 'tv' && c.poster_path)
+      .filter(item => {
+        const key = `tv-${item.id}`;
+        if (set.has(key)) return false;
+        set.add(key);
+        return true;
+      })
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 10)
+      .map(item => ({
+        id: item.id,
+        title: item.name,
+        poster: `${IMAGE_BASE}/w342${item.poster_path}`,
+        score: item.vote_average?.toFixed(1) || '–',
+        bookmarked: isInWatchlist(item.id, 'tv'),
+        type: 'tv',
+      }));
+  }, [credits, isInWatchlist]);
+
+  // Vollständige Filmographie, deduped by id + type
+  const dedupeActors = arr => {
+    const set = new Set();
+    return arr.filter(item => {
+      const key = `${item.type}-${item.id}`;
+      if (set.has(key)) return false;
+      set.add(key);
+      return true;
+    });
+  };
+  const moviesActors = useMemo(() =>
+    dedupeActors(
+      (credits?.cast || [])
+        .filter(c => c.media_type === 'movie')
+        .map(item => ({
+          id: item.id,
+          title: item.title,
+          poster: item.poster_path
+            ? `${IMAGE_BASE}/w185${item.poster_path}`
+            : '/placeholder-poster.jpg',
+          rating: item.vote_average?.toFixed(1) || '–',
+          yearsValue: item.release_date?.slice(0, 4) || '–',
+          characterValue: item.character || '–',
+          date: item.release_date?.slice(0, 4) || '0',
+          score: item.vote_average?.toFixed(1) || '–',
+          bookmarked: isInWatchlist(item.id, 'movie'),
+          type: 'movie',
+        }))
+    )
+    , [credits, isInWatchlist]
+  );
+
+  const tvActors = useMemo(() =>
+    dedupeActors(
+      (credits?.cast || [])
+        .filter(c => c.media_type === 'tv')
+        .map(item => ({
+          id: item.id,
+          title: item.name,
+          poster: item.poster_path
+            ? `${IMAGE_BASE}/w185${item.poster_path}`
+            : '/placeholder-poster.jpg',
+          rating: item.vote_average?.toFixed(1) || '–',
+          yearsValue: item.first_air_date?.slice(0, 4) || '–',
+          characterValue: item.character || '–',
+          date: item.first_air_date?.slice(0, 4) || '0',
+          score: item.vote_average?.toFixed(1) || '–',
+          bookmarked: isInWatchlist(item.id, 'tv'),
+          type: 'tv',
+        }))
+    )
+    , [credits, isInWatchlist]
+  );
+
   const displayActors = filter === 'movies' ? moviesActors : tvActors;
 
-  // Sort for grid
   const sortedActors = useMemo(() => {
-    const [field,order] = sortOption.split('_');
-    return [...displayActors].sort((a,b)=>{
-      let aV,bV;
-      if (field==='name') {
-        aV = a.title.toLowerCase();
-        bV = b.title.toLowerCase();
-      } else if (field==='rating') {
+    const [field, order] = sortOption.split('_');
+    return [...displayActors].sort((a, b) => {
+      let aV, bV;
+      if (field === 'name') {
+        aV = a.title?.toLowerCase() || '';
+        bV = b.title?.toLowerCase() || '';
+      } else if (field === 'rating') {
         aV = parseFloat(a.rating) || 0;
         bV = parseFloat(b.rating) || 0;
       } else {
         aV = a.date;
         bV = b.date;
       }
-      if (aV < bV) return order==='asc' ? -1 : 1;
-      if (aV > bV) return order==='asc' ? 1 : -1;
+      if (aV < bV) return order === 'asc' ? -1 : 1;
+      if (aV > bV) return order === 'asc' ? 1 : -1;
       return 0;
     });
   }, [displayActors, sortOption]);
@@ -168,16 +203,15 @@ export default function SingleArtistPage() {
   }
 
   const personalInfo = {
-    'Known For':      person.known_for_department,
-    'Known Credits':  credits.cast.length,
-    Gender:           person.gender === 1 ? 'Female' : 'Male',
-    Birthday:         person.birthday,
-    'Place of Birth': person.place_of_birth
+    'Known For': person.known_for_department,
+    'Known Credits': credits?.cast?.length || 0,
+    Gender: person.gender === 1 ? 'Female' : 'Male',
+    Birthday: person.birthday,
+    'Place of Birth': person.place_of_birth,
   };
 
   return (
     <div className="bg-[#141414] text-white w-full">
-      {/* Top section */}
       <div className="flex flex-col lg:flex-row gap-8 px-6 py-12">
         <div className="w-full lg:w-1/3 space-y-8">
           <ArtistShowcase
@@ -198,15 +232,17 @@ export default function SingleArtistPage() {
               className={`text-base leading-relaxed overflow-hidden transition-all ${
                 showFullBio ? 'max-h-full' : 'max-h-64'
               }`}
+              style={showFullBio ? { maxHeight: 'none' } : { maxHeight: '16rem' }} // Fallback für alle Browser
             >
               {person.biography ? person.biography : "Sorry, no bio available for this person."}
             </div>
-            {bioOverflow && (
+            {/* BUTTON: Immer wenn Overflow ODER ausgeklappt */}
+            {(bioOverflow || showFullBio) && (
               <button
-                onClick={() => setShowFullBio(f => !f)}
-                className="mt-2 text-blue-400 hover:underline"
+                onClick={() => setShowFullBio(v => !v)}
+                className="mt-2 text-blue-400 hover:underline block"
               >
-                {showFullBio ? 'Weniger anzeigen' : 'Weiterlesen'}
+                {showFullBio ? 'Show less' : 'Read more'}
               </button>
             )}
           </div>
@@ -221,8 +257,6 @@ export default function SingleArtistPage() {
           />
         </div>
       </div>
-
-      {/* Bottom section */}
       <div className="px-6 pb-12">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center gap-6">

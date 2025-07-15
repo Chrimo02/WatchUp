@@ -5,13 +5,16 @@ import App from './App.jsx';
 import './global.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { MovieProvider } from './contexts/MovieContext';
+import { PersonProvider } from './contexts/PersonContext';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <MovieProvider>
-          <App />
+          <PersonProvider>
+            <App />
+          </PersonProvider>
         </MovieProvider>
       </AuthProvider>
     </BrowserRouter>

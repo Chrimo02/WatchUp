@@ -1,52 +1,34 @@
 // src/pages/PopularPeople.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PeopleListView from '../components/PeopleListView';
 import PeopleGridView from '../components/PeopleGridView';
 import ListIcon from '../components/icons/ListIcon';
 import GridIcon from '../components/icons/GridIcon';
 import chairsBg from '../assets/chairs.jpg';
-
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+import { usePerson } from '../contexts/PersonContext';
 
 export default function PopularPeople() {
-  const [people, setPeople]             = useState([]);
-  const [totalResults, setTotalResults] = useState(0);
-  const [page, setPage]                 = useState(1);
-  const [inputPage, setInputPage]       = useState(1);
-  const [viewMode, setViewMode]         = useState('list');
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
+  const {
+    popularPeople,
+    totalResults,
+    loading,
+    error,
+    fetchPopularPeople,
+  } = usePerson();
 
-  const totalPages = Math.ceil(totalResults / 20);
+  const [page, setPage] = useState(1);
+  const [inputPage, setInputPage] = useState(1);
+  const [viewMode, setViewMode] = useState('list');
 
-  // Sync inputPage when page changes externally
+  useEffect(() => {
+    fetchPopularPeople(page);
+  }, [page, fetchPopularPeople]);
+
   useEffect(() => {
     setInputPage(page);
   }, [page]);
 
-  // Load people when page changes
-  useEffect(() => {
-    async function loadPeople() {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/person/popular?api_key=${API_KEY}&language=en-US&page=${page}`
-        );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setPeople(data.results);
-        setTotalResults(data.total_results);
-      } catch {
-        setError('Failed to load popular people.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadPeople();
-  }, [page]);
-
-  if (loading) return <div className="py-20 text-center text-white">Loading…</div>;
-  if (error)   return <div className="py-20 text-center text-red-500">{error}</div>;
+  const totalPages = Math.ceil(totalResults / 20);
 
   const commitInputPage = () => {
     let v = parseInt(inputPage, 10) || 1;
@@ -60,6 +42,9 @@ export default function PopularPeople() {
       commitInputPage();
     }
   };
+
+  if (loading) return <div className="py-20 text-center text-white">Loading…</div>;
+  if (error)   return <div className="py-20 text-center text-red-500">{error}</div>;
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
@@ -94,9 +79,9 @@ export default function PopularPeople() {
       {/* CONTENT */}
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {viewMode === 'list' ? (
-          <PeopleListView people={people} />
+          <PeopleListView people={popularPeople} />
         ) : (
-          <PeopleGridView people={people} />
+          <PeopleGridView people={popularPeople} />
         )}
 
         {/* PAGINATION */}
@@ -124,7 +109,7 @@ export default function PopularPeople() {
               className="
                 w-16 text-center bg-gray-800 border border-gray-600 rounded 
                 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-red-600
-                appearance-none /* hides default spinner */
+                appearance-none
               "
             />
             <span className="text-sm">/ {totalPages}</span>

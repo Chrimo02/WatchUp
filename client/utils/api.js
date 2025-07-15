@@ -278,4 +278,14 @@ export const handleApiError = (error) => {
   }
 };
 
+// Person endpoints
+export const getPersonDetails = (personId, language = 'en-US') =>
+  api.get(`/person/${personId}`, { params: { language } });
+
+export const getPersonCombinedCredits = (personId, language = 'en-US') =>
+  api.get(`/person/${personId}/combined_credits`, { params: { language } });
+
+export const getPopularPeople = (page = 1) =>
+  api.get(`/person/popular`, { params: { page } });
+
 export default api;

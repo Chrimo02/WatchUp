@@ -1,29 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import profilePlaceholder from '../assets/placeholder-profile.png';
+import { usePerson } from '../contexts/PersonContext';
 
-const API_KEY    = import.meta.env.VITE_TMDB_API_KEY;
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export default function PersonListItem({ person }) {
   const [bio, setBio] = useState('');
+  const { fetchPersonBio } = usePerson();
 
   useEffect(() => {
     let mounted = true;
     async function loadBio() {
-      try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/person/${person.id}?api_key=${API_KEY}&language=en-US`
-        );
-        const data = await res.json();
-        if (mounted) setBio(data.biography || 'Sorry, no bio available for this person.');
-      } catch {
-        if (mounted) setBio('Sorry, no bio available for this person.');
-      }
+      const b = await fetchPersonBio(person.id);
+      if (mounted) setBio(b || 'Sorry, no bio available for this person.');
     }
     loadBio();
     return () => { mounted = false };
-  }, [person.id]);
+  }, [person.id, fetchPersonBio]);
 
   return (
     <Link to={`/person/${person.id}`} className="block">

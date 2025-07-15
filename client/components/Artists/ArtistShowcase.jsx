@@ -6,12 +6,10 @@ export default function ArtistShowcase({
   portraitSrc,
   portraitAlt = profilePlaceholder,
 }) {
-
   const [src, setSrc] = useState(portraitSrc || profilePlaceholder);
 
   return (
     <div className="w-full max-w-[280px] mx-auto">
-      {/* Main container with aspect ratio preservation */}
       <div className="relative w-full aspect-[478/641]">
         {/* Stage background image */}
         <div className="absolute inset-0">
@@ -21,7 +19,6 @@ export default function ArtistShowcase({
             className="w-full h-full object-cover rounded-[2.09%]"
           />
         </div>
-
         {/* Right gradient overlay */}
         <div className="absolute top-0 w-[45%] h-full" style={{ left: "55%" }}>
           <svg
@@ -47,7 +44,6 @@ export default function ArtistShowcase({
             </defs>
           </svg>
         </div>
-
         {/* Left gradient overlay */}
         <div className="absolute top-0 left-0 w-[45%] h-full">
           <svg
@@ -74,7 +70,6 @@ export default function ArtistShowcase({
             </defs>
           </svg>
         </div>
-
         {/* Top gradient overlay */}
         <div
           className="absolute top-0 left-0 w-full h-[12%]"
@@ -83,7 +78,6 @@ export default function ArtistShowcase({
               "linear-gradient(180deg, #141414 0%, rgba(20,20,20,0) 100%)",
           }}
         />
-
         {/* Bottom gradient overlay - full width */}
         <div
           className="absolute bottom-0 left-0 w-full h-[11.54%]"
@@ -92,15 +86,13 @@ export default function ArtistShowcase({
               "linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, #141414 100%)",
           }}
         />
-
-        {/* Artist portrait - repositioned */}
+        {/* Artist portrait */}
         <div className="absolute top-[27.14%] left-[23.22%] w-[48.12%] aspect-[2/3]">
           <img
             src={src}
             alt={portraitAlt}
             className="w-full h-full object-cover rounded-[4.35%]"
             onError={() => {
-              // if the img 404s or portraitSrc was falsy, swap to placeholder
               if (src !== profilePlaceholder) {
                 setSrc(profilePlaceholder);
               }
