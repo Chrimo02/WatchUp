@@ -2,14 +2,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import MovieDetailsPage from "./pages/MovieDetailsPage.jsx";
+import SeriesDetailsPage from "./pages/SeriesDetailsPage.jsx";
 import Layout from './components/Layout';
 
 import { useAuth } from './contexts/AuthContext';
 
-
 function App() {
   const { isInitialized } = useAuth();
-    
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -17,13 +17,16 @@ function App() {
       </div>
     );
   }
+  
   return (
-        <Routes>
-          <Route path="/" element={<Layout />} >
-            <Route index element={<HomePage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+    <Routes>
+      <Route path="/" element={<Layout />} >
+        <Route index element={<HomePage />} />
+        <Route path="movie/:id" element={<MovieDetailsPage />} />
+        <Route path="tv/:id" element={<SeriesDetailsPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 }
 
