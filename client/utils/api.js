@@ -49,6 +49,8 @@ export const getTVShows = {
 // Details
 export const getMovieDetails = (movieId) => api.get(`/movie/${movieId}`);
 export const getTVShowDetails = (tvId) => api.get(`/tv/${tvId}`);
+export const getSeasonDetails = (tvId, seasonNumber) =>
+  api.get(`/tv/${tvId}/season/${seasonNumber}`);
 
 // Credits
 export const getMovieCredits = (movieId) => api.get(`/movie/${movieId}/credits`);

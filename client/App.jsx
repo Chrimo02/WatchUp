@@ -6,6 +6,8 @@ import Layout from './components/Layout';
 import SingleArtistPage from "./pages/SingleArtistPage.jsx"; 
 import PopularPeople from "./pages/PopularPeople.jsx";
 
+import ComponentTestPage from "./pages/ComponentTestPage.jsx";
+import SeasonPage from "./pages/SeasonPage.jsx";
 
 import { useAuth } from './contexts/AuthContext';
 
@@ -21,15 +23,17 @@ function App() {
     );
   }
   return (
-        <Routes>
-          <Route path="/" element={<Layout />} >
-            <Route index element={<HomePage />} />
+    <Routes>
+    <Route path="/" element={<Layout />} >
+      <Route index element={<HomePage />} />
             <Route path="person/:id" element={<SingleArtistPage />} />
             <Route path="people" element={<PopularPeople />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-  );
+      <Route path="component-test" element={<ComponentTestPage />} />
+      <Route path="series/:tvId/season/:seasonNumber" element={<SeasonPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Route>
+  </Routes>);
+
 }
 
 export default App;
