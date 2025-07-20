@@ -24,7 +24,6 @@ function App() {
     <Route path="/" element={<Layout />} >
       <Route index element={<HomePage />} />
       <Route path="component-test" element={<ComponentTestPage />} />
-      {/* <Route path="season-page" element={<SeasonPage />} /> */}
       <Route path="series/:tvId/season/:seasonNumber" element={<SeasonPage />} />
       <Route path="*" element={<NotFound />} />
     </Route>
