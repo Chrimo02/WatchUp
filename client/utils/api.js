@@ -50,6 +50,8 @@ export const getTVShows = {
 export const getMovieDetails = (movieId) => api.get(`/movie/${movieId}`);
 export const getTVShowDetails = (tvId) =>
   api.get(`/tv/${tvId}`, { params: { append_to_response: 'external_ids' } });
+export const getSeasonDetails = (tvId, seasonNumber) =>
+  api.get(`/tv/${tvId}/season/${seasonNumber}`);
 
 // Credits
 export const getMovieCredits = (movieId) => api.get(`/movie/${movieId}/credits`);
@@ -404,5 +406,15 @@ export const handleApiError = (error) => {
     return error.message;
   }
 };
+
+// Person endpoints
+export const getPersonDetails = (personId, language = 'en-US') =>
+  api.get(`/person/${personId}`, { params: { language } });
+
+export const getPersonCombinedCredits = (personId, language = 'en-US') =>
+  api.get(`/person/${personId}/combined_credits`, { params: { language } });
+
+export const getPopularPeople = (page = 1) =>
+  api.get(`/person/popular`, { params: { page } });
 
 export default api;

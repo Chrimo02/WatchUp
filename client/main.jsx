@@ -5,8 +5,10 @@ import App from './App.jsx';
 import './global.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { MovieProvider } from './contexts/MovieContext';
+import { PersonProvider } from './contexts/PersonContext';
 import { OmdbProvider } from './contexts/OmdbContext.jsx';
 import { LanguageProvider } from './contexts/LanguageContext.jsx';
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,9 +16,11 @@ createRoot(document.getElementById('root')).render(
       <LanguageProvider>
       <AuthProvider>
         <MovieProvider>
-          <OmdbProvider>
-            <App />
-          </OmdbProvider>
+          <PersonProvider>
+            <OmdbProvider>
+              <App />
+            </OmdbProvider>
+          </PersonProvider>
         </MovieProvider>
       </AuthProvider>
       </LanguageProvider>
