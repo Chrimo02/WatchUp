@@ -26,12 +26,11 @@ const playTrailer = () => {
   const closeTrailer = () => setShowTrailer(false);
 
   return (
-    <div className="w-full min-h-screen bg-[#0d1117] font-[Poppins] relative">
-      {/* Background Image - Now uses min-h-full to cover all content */}
-      <MovieBackground url={movieData.backgroundUrl} />
+    <div className="w-full bg-[#0d1117] font-[Poppins] relative">
+  <MovieBackground url={movieData.backgroundUrl} />
 
       {/* Main Content Container */}
-      <div className="relative z-10 px-4 md:px-12 pt-[55px] pb-12">
+  <div className="relative z-10 px-4 md:px-12 pt-[55px] pb-12">
         <div className="max-w-[1320px] mx-auto">
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
             {/* Movie Poster */}
