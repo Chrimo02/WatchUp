@@ -145,17 +145,8 @@ function AdvancedSearch() {
 
     return (
 
-        <div className="w-full min-h-screen bg-movie-bg font-poppins flex items-center justify-center p-4">
+        <div className="w-full bg-movie-bg font-poppins flex items-center justify-center p-4">
             <div className="w-full max-w-[666px] relative">
-                {/* Header */}
-                <div className="flex justify-center mb-[37px]">
-                    <div className="w-[214px] h-[75px] bg-movie-bg rounded-[30px] flex items-center justify-center border border-movie-card">
-                        <span className="text-movie-text text-[20px] font-medium">
-                            Search Filters
-                        </span>
-                    </div>
-                </div>
-
                 {/* Main Container */}
                 <div className="w-full bg-movie-bg rounded-[50px] border border-movie-card">
                     <div className="p-[28px]">
@@ -184,7 +175,7 @@ function AdvancedSearch() {
                                                 Watchlist
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-[8px]">
+                                        <div className="flex items-column gap-[8px]">
                                             <RadioOption
                                                 value="all"
                                                 currentValue={watchlistFilter}
@@ -197,7 +188,7 @@ function AdvancedSearch() {
                                                 currentValue={watchlistFilter}
                                                 onChange={(value) => setWatchlistFilter(value)}
                                             >
-                                                In watchlist
+                                                In Watchlist
                                             </RadioOption>
                                             <RadioOption
                                                 value="not"
