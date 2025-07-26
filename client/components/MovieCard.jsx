@@ -45,9 +45,8 @@ export default function MovieCard({
   const handleBookmarkClick = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isLoading && onBookmarkToggle) {
-      onBookmarkToggle(mediaId, mediaType);
-    }
+    if (isLoading) return;
+    onBookmarkToggle(mediaId, mediaType);
   };
 
   return (
@@ -61,7 +60,8 @@ export default function MovieCard({
         />
 
         {/* Bookmark */}
-        <div
+        <button
+          type="button"
           onClick={handleBookmarkClick}
           className={`
             absolute left-2 top-[3px] transform -translate-y-1 
@@ -75,7 +75,7 @@ export default function MovieCard({
             alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
             className="w-full h-full object-contain"
           />
-        </div>
+        </button>
 
         {/* Score badge */}
         <div className="
@@ -105,17 +105,22 @@ export default function MovieCard({
 
         {onMenuClick && (
           <button
-          onClick={() => onMenuClick(mediaId)}
-          className="
-            p-1 
-            rounded-full 
-            bg-white text-gray-900 
-            hover:bg-gray-700/80 hover:text-white 
-            transition-colors
-          "
-        >
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+            type="button"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              onMenuClick(mediaId);
+            }}
+            className="
+              p-1 
+              rounded-full 
+              bg-white text-gray-900 
+              hover:bg-gray-700/80 hover:text-white 
+              transition-colors
+            "
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
         )}
       </div>
     </div>

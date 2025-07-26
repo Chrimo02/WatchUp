@@ -1,3 +1,4 @@
+// src/components/ListComponent.jsx
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useMovies } from '../contexts/MovieContext';
@@ -97,10 +98,7 @@ export default function ListComponent({
 
             {/* Rate Button */}
             {onRate && (
-              <button
-                onClick={() => onRate(mediaId)}
-                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
-              >
+              <button type="button" onClick={() => onRate(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
                 <StarOutline className="w-5 h-5" />
                 <span>Rate</span>
               </button>
@@ -108,10 +106,7 @@ export default function ListComponent({
 
             {/* Add to List Button */}
             {onAddToList && (
-              <button
-                onClick={() => onAddToList(mediaId)}
-                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
-              >
+              <button type="button" onClick={() => onAddToList(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
                 <Plus className="w-5 h-5" />
                 <span>Add to list</span>
               </button>
@@ -119,10 +114,7 @@ export default function ListComponent({
 
             {/* Favourite Button */}
             {onFavorite && (
-              <button
-                onClick={() => onFavorite(mediaId)}
-                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
-              >
+              <button type="button" onClick={() => onFavorite(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
                 <Heart className="w-5 h-5" />
                 <span>Favourite</span>
               </button>
@@ -147,7 +139,8 @@ export default function ListComponent({
       </div>
 
       {/* Bookmark Button */}
-      <div
+      <button
+        type="button"
         onClick={handleBookmarkClick}
         className={`absolute left-6 top-[15px] w-[34px] h-[45px] z-10 transform hover:scale-110 transition-transform duration-200 ease-out ${
           isLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
@@ -162,7 +155,19 @@ export default function ListComponent({
             className="w-full h-full object-contain"
           />
         )}
-      </div>
+      </button>
     </div>
   );
 }
+
+ListComponent.propTypes = {
+  mediaType:      PropTypes.string.isRequired,
+  mediaId:        PropTypes.number.isRequired,
+  streamingPlatforms: PropTypes.array,
+  onRate:         PropTypes.func,
+  onAddToList:    PropTypes.func,
+  onFavorite:     PropTypes.func,
+  bookmarked:     PropTypes.bool,
+  isLoading:      PropTypes.bool,
+  onBookmarkToggle: PropTypes.func.isRequired,
+};
