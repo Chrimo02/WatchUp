@@ -8,6 +8,7 @@ import SeasonListComponent from '../components/SeasonListComponent';
 import ListComponent from '../components/ListComponent.jsx';
 import { AppleTVIcon, NetflixIcon } from '../assets/icons';
 
+
 function ComponentTestPage() {
   const {
     fetchTrendingMovies,
@@ -17,6 +18,7 @@ function ComponentTestPage() {
     toggleWatchlist,
     isInWatchlist
   } = useMovies();
+
 
   useEffect(() => {
     fetchTrendingMovies();      // loads into trendingMovies[]
@@ -114,7 +116,6 @@ function ComponentTestPage() {
        still_path={/* e.g. from show.poster_path */ show.poster_path}
        onRate={id => console.log("Rated episode", id)}
      />
-
     </div>
   );
 }

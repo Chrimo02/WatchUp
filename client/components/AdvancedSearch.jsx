@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ function AdvancedSearch() {
     const [selectedType, setSelectedType] = useState("all");
     const [watchlistFilter, setWatchlistFilter] = useState("all");
     const [ratingsFilter, setRatingsFilter] = useState("all");
-    const { isAuthenticated} = useAuth();
+    const { isAuthenticated } = useAuth();
 
     //Hier unsicher falls was net geht noch ChatGPT fragen
     const [scoreRange, setScoreRange] = useState([0, 10]);
@@ -24,6 +24,16 @@ function AdvancedSearch() {
         ageRating: false,
         streaming: false,
     });
+
+    useEffect(() => {
+        console.log("ScoreRange updated:", scoreRange);
+    }, [scoreRange]);
+
+    useEffect(() => {
+        console.log("RuntimeRange updated:", runtimeRange);
+    }, [runtimeRange]);
+
+
 
     const toggleDropdown = (key) => {
         setDropdowns((prev) => ({
@@ -113,7 +123,10 @@ function AdvancedSearch() {
             <div className="relative">
                 <Slider
                     value={range}
-                    onValueChange={onRangeChange}
+                    onValueChange={(val) => {
+                        console.log("Slider changed:", val);
+                        onRangeChange(val);
+                    }}
                     min={min}
                     max={max}
                     step={step}
@@ -128,18 +141,12 @@ function AdvancedSearch() {
         </div>
     );
 
-    return (
-        <div className="w-full min-h-screen bg-movie-bg font-poppins flex items-center justify-center p-4">
-            <div className="w-full max-w-[666px] relative">
-                {/* Header */}
-                <div className="flex justify-center mb-[37px]">
-                    <div className="w-[214px] h-[75px] bg-movie-bg rounded-[30px] flex items-center justify-center border border-movie-card">
-                        <span className="text-movie-text text-[20px] font-medium">
-                            Search Filters
-                        </span>
-                    </div>
-                </div>
 
+
+    return (
+
+        <div className="w-full bg-movie-bg font-poppins flex items-center justify-center p-4">
+            <div className="w-full max-w-[666px] relative">
                 {/* Main Container */}
                 <div className="w-full bg-movie-bg rounded-[50px] border border-movie-card">
                     <div className="p-[28px]">
@@ -168,7 +175,7 @@ function AdvancedSearch() {
                                                 Watchlist
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-[8px]">
+                                        <div className="flex items-column gap-[8px]">
                                             <RadioOption
                                                 value="all"
                                                 currentValue={watchlistFilter}
@@ -181,7 +188,7 @@ function AdvancedSearch() {
                                                 currentValue={watchlistFilter}
                                                 onChange={(value) => setWatchlistFilter(value)}
                                             >
-                                                In watchlist
+                                                In Watchlist
                                             </RadioOption>
                                             <RadioOption
                                                 value="not"
@@ -211,15 +218,20 @@ function AdvancedSearch() {
                                 />
 
                                 {/* Score Slider */}
-                                <SliderSection
-                                    title="Score"
-                                    range={scoreRange}
-                                    onRangeChange={setScoreRange}
-                                    min={0}
-                                    max={10}
-                                    step={0.1}
-                                    labels={{ min: "0", mid: "5", max: "10" }}
-                                />
+                                <div className="p-4">
+                                    <Slider
+                                        value={scoreRange}
+                                        onValueChange={(val) => {
+                                            console.log("ScoreSlider changed:", val);
+                                            setScoreRange(val);
+                                        }}
+                                        min={0}
+                                        max={10}
+                                        step={0.1}
+                                        className="w-full"
+                                    />
+                                    <p className="text-white text-sm mt-2">Score: {scoreRange[0]} – {scoreRange[1]}</p>
+                                </div>
                             </div>
 
                             {/* Right Column */}
@@ -302,15 +314,20 @@ function AdvancedSearch() {
                                 />
 
                                 {/* Runtime Slider */}
-                                <SliderSection
-                                    title="Runtime"
-                                    range={runtimeRange}
-                                    onRangeChange={setRuntimeRange}
-                                    min={0}
-                                    max={360}
-                                    step={5}
-                                    labels={{ min: "0", mid: "120", max: "360" }}
-                                />
+                                <div className="p-4">
+                                    <Slider
+                                        value={runtimeRange}
+                                        onValueChange={(val) => {
+                                            console.log("RuntimeSlider changed:", val);
+                                            setRuntimeRange(val);
+                                        }}
+                                        min={0}
+                                        max={360}
+                                        step={5}
+                                        className="w-full"
+                                    />
+                                    <p className="text-white text-sm mt-2">Runtime: {runtimeRange[0]} – {runtimeRange[1]}</p>
+                                </div>
                             </div>
                         </div>
 
