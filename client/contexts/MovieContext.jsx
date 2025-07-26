@@ -31,7 +31,7 @@ const MovieContext = createContext({
   airingTodayTVShows: [],
   genres: [],
   upcomingMoviesWithTrailers: [],
-  accountStates: {}, // New: cache for account states
+  accountStates: {}, 
   fetchTrendingMovies: async () => {},
   fetchPopularMovies: async () => {},
   fetchTopRatedMovies: async () => {},

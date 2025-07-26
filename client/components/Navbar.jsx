@@ -1,9 +1,10 @@
 import { Search, User } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // Pfad anpassen, falls nötig
+import { useAuth } from '../contexts/AuthContext';
 import SignIn from '../assets/SignIn.svg';
 import Shuffle from '../assets/Shuffle.svg';
 import WatchlistIcon from '../assets/Watchlist.svg';
+import LanguageSelector from './LanguageSelector';
 
 export default function Navbar() {
   const { isAuthenticated, user, login } = useAuth();
@@ -51,9 +52,8 @@ export default function Navbar() {
 
       {/* ───── Icons / Profil ───── */}
       <div className="flex items-center justify-end gap-2 lg:gap-4">
-        <span className="flex h-6 w-6 items-center justify-center border border-white text-[12px] font-bold leading-6 tracking-[0.32px] text-white lg:text-[14px]">
-          EN
-        </span>
+        {/* Language Selector */}
+        <LanguageSelector />
 
         <img src={Shuffle} alt="Shuffle" className="hidden h-5 w-5 lg:block" />
 

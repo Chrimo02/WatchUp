@@ -48,7 +48,8 @@ export const getTVShows = {
 
 // Details
 export const getMovieDetails = (movieId) => api.get(`/movie/${movieId}`);
-export const getTVShowDetails = (tvId) => api.get(`/tv/${tvId}`);
+export const getTVShowDetails = (tvId) =>
+  api.get(`/tv/${tvId}`, { params: { append_to_response: 'external_ids' } });
 export const getSeasonDetails = (tvId, seasonNumber) =>
   api.get(`/tv/${tvId}/season/${seasonNumber}`);
 
@@ -60,12 +61,27 @@ export const getTVShowCredits = (tvId) => api.get(`/tv/${tvId}/credits`);
 export const getMovieVideos = (movieId) => api.get(`/movie/${movieId}/videos`);
 export const getTVShowVideos = (tvId) => api.get(`/tv/${tvId}/videos`);
 
+export const getMovieKeywords = (movieId) =>
+  api.get(`/movie/${movieId}/keywords`);
+
+export const getShowKeywords = (tvId) => 
+  api.get(`/tv/${tvId}/keywords`)
+
 // Similar content
 export const getSimilarMovies = (movieId, page = 1) => 
   api.get(`/movie/${movieId}/similar`, { params: { page } });
 
+export const getRecommendedMovies = (movieId, page = 1) =>
+  api.get(`/movie/${movieId}/recommendations`, { params: { page } });
+
+export const getRecommendedTVShows = (tvId, page = 1) =>
+  api.get(`/tv/${tvId}/recommendations`, { params: { page } });
+
 export const getSimilarTVShows = (tvId, page = 1) => 
   api.get(`/tv/${tvId}/similar`, { params: { page } });
+
+export const getTVShowExternalIds = (tvId) =>
+  api.get(`/tv/${tvId}/external_ids`);
 
 // Search
 export const searchMovies = (query, page = 1) => 
@@ -172,7 +188,118 @@ export const getBackdropUrl = (path, size = 'w1280') => {
   if (!path) return '/placeholder-backdrop.jpg';
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
-// Add these new functions to your existing api.js file
+export const deleteMovieRating = (movieId, sessionId) => 
+  api.delete(`/movie/${movieId}/rating`, { 
+    params: { session_id: sessionId } 
+  });
+
+export const deleteTVShowRating = (tvId, sessionId) => 
+  api.delete(`/tv/${tvId}/rating`, { 
+    params: { session_id: sessionId } 
+  });
+
+
+// Get movie release dates and certifications
+export const getMovieReleaseDates = (movieId) => 
+  api.get(`/movie/${movieId}/release_dates`);
+
+// Get TV show content ratings
+export const getTVShowContentRatings = (tvId) => 
+  api.get(`/tv/${tvId}/content_ratings`);
+
+// Modified api instance to include language parameter
+const apiWithLanguage = (language = 'en-US') => axios.create({
+  baseURL: BASE_URL,
+  params: {
+    api_key: API_KEY,
+    language: language,
+  },
+});
+
+// Updated movie details with language support
+export const getMovieDetailsWithLanguage = (movieId, language = 'en-US') => 
+  apiWithLanguage(language).get(`/movie/${movieId}`);
+
+// Updated TV show details with language support
+export const getTVShowDetailsWithLanguage = (tvId, language = 'en-US') =>
+  apiWithLanguage(language).get(`/tv/${tvId}`, {
+    params: { append_to_response: 'external_ids' }
+  });
+
+export const getTVShowWatchProviders = (tvId) =>
+  api.get(`/tv/${tvId}/watch/providers`);
+
+export const getMovieWatchProviders = (movieId) =>
+  api.get(`/movie/${movieId}/watch/providers`);
+
+
+// Helper function to get age rating for specific region
+export const getAgeRatingForRegion = (releaseDates, region = 'US') => {
+  if (!releaseDates || !releaseDates.results) return null;
+  
+  const regionData = releaseDates.results.find(r => r.iso_3166_1 === region);
+  if (!regionData || !regionData.release_dates) return null;
+  
+  // Find the release with certification
+  const releaseWithCertification = regionData.release_dates.find(
+    rd => rd.certification && rd.certification.trim() !== ''
+  );
+  
+  return releaseWithCertification ? releaseWithCertification.certification : null;
+};
+
+// Helper function to get TV content rating for specific region
+export const getTVContentRatingForRegion = (contentRatings, region = 'US') => {
+  if (!contentRatings || !contentRatings.results) return null;
+  
+  const regionData = contentRatings.results.find(r => r.iso_3166_1 === region);
+  return regionData ? regionData.rating : null;
+};
+
+// Age rating mapping for different regions
+export const getAgeRatingInfo = (certification, region = 'US') => {
+  const ratings = {
+    US: {
+      'G': { age: 0, color: 'bg-green-600', description: 'General Audiences' },
+      'PG': { age: 0, color: 'bg-yellow-600', description: 'Parental Guidance' },
+      'PG-13': { age: 13, color: 'bg-orange-600', description: 'Parents Strongly Cautioned' },
+      'R': { age: 17, color: 'bg-red-600', description: 'Restricted' },
+      'NC-17': { age: 18, color: 'bg-red-800', description: 'Adults Only' },
+    },
+    DE: {
+      'FSK 0': { age: 0, color: 'bg-green-600', description: 'Freigegeben ohne Altersbeschränkung' },
+      'FSK 6': { age: 6, color: 'bg-yellow-600', description: 'Freigegeben ab 6 Jahren' },
+      'FSK 12': { age: 12, color: 'bg-orange-600', description: 'Freigegeben ab 12 Jahren' },
+      'FSK 16': { age: 16, color: 'bg-red-600', description: 'Freigegeben ab 16 Jahren' },
+      'FSK 18': { age: 18, color: 'bg-red-800', description: 'Keine Jugendfreigabe' },
+    },
+    GB: {
+      'U': { age: 0, color: 'bg-green-600', description: 'Universal' },
+      'PG': { age: 0, color: 'bg-yellow-600', description: 'Parental Guidance' },
+      '12': { age: 12, color: 'bg-orange-600', description: 'Suitable for 12+' },
+      '12A': { age: 12, color: 'bg-orange-600', description: 'Suitable for 12+ (Cinema)' },
+      '15': { age: 15, color: 'bg-red-600', description: 'Suitable for 15+' },
+      '18': { age: 18, color: 'bg-red-800', description: 'Suitable for adults only' },
+    },
+  };
+  
+  const regionRatings = ratings[region] || ratings.US;
+  const ratingInfo = regionRatings[certification];
+  
+  if (!ratingInfo) {
+    return {
+      age: 0,
+      color: 'bg-gray-600',
+      description: certification || 'Not Rated',
+      displayText: certification || 'NR'
+    };
+  }
+  
+  return {
+    ...ratingInfo,
+    displayText: certification
+  };
+};
 
 // Account states for movies and TV shows
 export const getMovieAccountStates = (movieId, sessionId) => 
