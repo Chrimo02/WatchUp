@@ -1,11 +1,17 @@
-// src/pages/DiscoveryPage.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Popover } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { useMovies } from "../contexts/MovieContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useBookmarkToggle } from "../hooks/useBookmarkToggle";
-import { getMovies } from "../utils/api";
+import { useLanguage } from "../contexts/LanguageContext";
+import {
+  getMovies,
+  getMovieWatchProviders,
+  markAsFavorite,
+  addToWatchlist,
+  rateMovie,
+} from "../utils/api";
 import MovieCard from "../components/MovieCard";
 import MovieCardMenu from "../components/MovieCardMenu";
 import ListComponent from "../components/ListComponent";
@@ -25,16 +31,18 @@ export default function DiscoveryPage() {
   } = useMovies();
   const { isAuthenticated, user, sessionId, login } = useAuth();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
+  const { region } = useLanguage();
 
   const [movies, setMovies] = useState([]);
   const [totalResults, setTotalResults] = useState(0);
+  const [providersMap, setProvidersMap] = useState({});
+  const [filters, setFilters] = useState({});
   const [sortOption, setSortOption] = useState("date_desc");
   const [viewMode, setViewMode] = useState("grid");
   const [page, setPage] = useState(1);
   const [inputPage, setInputPage] = useState(1);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
-  // Für einheitliche Grid-Row-Höhe
   const [rowHeight, setRowHeight] = useState(null);
   const gridRef = useRef(null);
 
@@ -53,23 +61,29 @@ export default function DiscoveryPage() {
   };
   const sortBy = sortByMap[sortOption];
 
-  // Daten laden & danach Account-States in Batch holen
+  // close open menus on outside click
+  useEffect(() => {
+    const onOutside = () => setMenuOpenFor(null);
+    document.addEventListener("click", onOutside);
+    return () => document.removeEventListener("click", onOutside);
+  }, []);
+
+  // fetch data, states, providers
   useEffect(() => {
     const load = async () => {
       try {
         let results = [], total = 0;
-
         if (sortOption === "trending") {
           const { data } = await getMovies.trending();
           results = data.results;
-          total = data.results.length;
+          total = results.length;
         } else {
-          const { results: res, total_results } =
-            await discoverMoviesByFilter({
-              page,
-              sort_by: sortBy,
-              "vote_count.gte": 50,
-            });
+          const { results: res, total_results } = await discoverMoviesByFilter({
+            page,
+            sort_by: sortBy,
+            "vote_count.gte": 50,
+            ...filters,
+          });
           results = res;
           total = total_results;
         }
@@ -77,20 +91,25 @@ export default function DiscoveryPage() {
         setMovies(results);
         setTotalResults(total);
 
-        if (
-          isAuthenticated &&
-          user?.id &&
-          sessionId &&
-          results.length > 0
-        ) {
-          // TMDB-Batch abfragen (max. 20)
-          const items = results.map((m) => ({ id: m.id, type: "movie" }));
-          await getBatchAccountStates(items, sessionId);
+        if (isAuthenticated && user?.id && sessionId && results.length) {
+          await getBatchAccountStates(
+            results.map((m) => ({ id: m.id, type: "movie" })),
+            sessionId
+          );
         }
+
+        const provs = await Promise.all(
+          results.map(async (m) => {
+            const { data } = await getMovieWatchProviders(m.id);
+            return [m.id, data.results[region] || {}];
+          })
+        );
+        setProvidersMap(Object.fromEntries(provs));
       } catch (err) {
-        console.error("Error loading DiscoveryPage data:", err);
+        console.error("DiscoveryPage load error:", err);
         setMovies([]);
         setTotalResults(0);
+        setProvidersMap({});
       }
     };
     load();
@@ -99,13 +118,15 @@ export default function DiscoveryPage() {
     page,
     sortBy,
     discoverMoviesByFilter,
+    filters,
     isAuthenticated,
     user,
     sessionId,
     getBatchAccountStates,
+    region,
   ]);
 
-  // Pagination-Input synchronisieren
+  // sync pagination input
   useEffect(() => {
     setInputPage(page);
   }, [page]);
@@ -116,7 +137,7 @@ export default function DiscoveryPage() {
   };
   const onKeyDown = (e) => e.key === "Enter" && commitPage();
 
-  // Grid-Row-Höhe auf Höhe der höchsten Card setzen
+  // uniform grid row heights
   useEffect(() => {
     if (viewMode !== "grid") return;
     const measure = () => {
@@ -125,8 +146,7 @@ export default function DiscoveryPage() {
       gridRef.current
         .querySelectorAll(".movie-card-wrapper")
         .forEach((el) => {
-          const h = el.getBoundingClientRect().height;
-          if (h > max) max = h;
+          max = Math.max(max, el.getBoundingClientRect().height);
         });
       setRowHeight(max);
     };
@@ -138,14 +158,10 @@ export default function DiscoveryPage() {
     };
   }, [movies, bookmarkLoadingStates, viewMode]);
 
-  if (globalLoading) {
+  if (globalLoading)
     return <div className="py-20 text-center text-white">Loading…</div>;
-  }
-  if (error) {
-    return <div className="py-20 text-center text-red-500">{error}</div>;
-  }
+  if (error) return <div className="py-20 text-center text-red-500">{error}</div>;
 
-  // Items für Rendering
   const items = movies.map((m) => ({
     mediaId: m.id,
     mediaType: "movie",
@@ -179,10 +195,19 @@ export default function DiscoveryPage() {
               <span>Filter</span>
               <ChevronDown className="w-4 h-4 text-white" />
             </Popover.Button>
-            <Popover.Panel className=" fixed right-0 mt-2 w-[600px] bg-[#141414] rounded shadow-lg z-10">
-              <AdvancedSearch />
+            <Popover.Panel
+              className="
+                absolute right-0 top-full mt-2
+                w-screen max-w-[90vw] sm:w-[600px]
+                bg-[#141414] rounded-[1rem]
+                border border-white z-50
+                max-h-[80vh] overflow-auto
+              "
+            >
+              <AdvancedSearch onSearch={setFilters} />
             </Popover.Panel>
           </Popover>
+
           {/* SORT */}
           <div className="relative">
             <select
@@ -207,6 +232,7 @@ export default function DiscoveryPage() {
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </div>
           </div>
+
           {/* VIEW MODE */}
           <button
             className={`p-2 rounded ${
@@ -230,9 +256,7 @@ export default function DiscoveryPage() {
       {/* CONTENT */}
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {items.length === 0 ? (
-          <div className="text-gray-400 text-center py-8">
-            No movies found.
-          </div>
+          <div className="text-gray-400 text-center py-8">No movies found.</div>
         ) : viewMode === "grid" ? (
           <div
             ref={gridRef}
@@ -249,22 +273,38 @@ export default function DiscoveryPage() {
                   mediaType={mediaType}
                   bookmarked={bookmarked}
                   isLoading={isLoading}
-                  onBookmarkToggle={(id, type) => {
-                    if (!isAuthenticated) return login();
-                    handleBookmarkToggle(id, type);
-                  }}
-                  onMenuClick={(id) =>
-                    setMenuOpenFor(menuOpenFor === id ? null : id)
+                  onBookmarkToggle={handleBookmarkToggle}
+                  onMenuClick={() =>
+                    setMenuOpenFor(menuOpenFor === mediaId ? null : mediaId)
                   }
                   className="h-full"
                 />
                 {menuOpenFor === mediaId && (
-                  <div className="absolute right-2 top-[calc(100%_-_48px)] z-20">
+                  <div
+                    className="absolute right-2 top-[calc(100%_-_48px)] z-20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MovieCardMenu
-                      onRate={() => {}}
-                      onAddToList={() => {}}
+                      onRate={(rating) =>
+                        rateMovie(mediaId, sessionId, rating)
+                      }
+                      onAddToList={() =>
+                        addToWatchlist(
+                          user.id,
+                          sessionId,
+                          mediaId,
+                          "movie",
+                          !isInWatchlist(mediaId, "movie")
+                        )
+                      }
                       onFavorite={() =>
-                        handleBookmarkToggle(mediaId, mediaType)
+                        markAsFavorite(
+                          user.id,
+                          sessionId,
+                          mediaId,
+                          "movie",
+                          !isInWatchlist(mediaId, "movie")
+                        )
                       }
                     />
                   </div>
@@ -281,16 +321,46 @@ export default function DiscoveryPage() {
                 mediaId={mediaId}
                 bookmarked={bookmarked}
                 isLoading={isLoading}
-                onBookmarkToggle={(id, type) => {
-                  if (!isAuthenticated) return login();
-                  handleBookmarkToggle(id, type);
-                }}
+                onBookmarkToggle={handleBookmarkToggle}
+                onFavorite={() =>
+                  markAsFavorite(
+                    user.id,
+                    sessionId,
+                    mediaId,
+                    "movie",
+                    !isInWatchlist(mediaId, "movie")
+                  )
+                }
+                onAddToList={() =>
+                  addToWatchlist(
+                    user.id,
+                    sessionId,
+                    mediaId,
+                    "movie",
+                    !isInWatchlist(mediaId, "movie")
+                  )
+                }
+                onRate={(value) => rateMovie(mediaId, sessionId, value)}
+                streamingPlatforms={[
+                  ...(providersMap[mediaId]?.flatrate || []),
+                  ...(providersMap[mediaId]?.rent || []),
+                  ...(providersMap[mediaId]?.buy || []),
+                ].map((p) => ({
+                  icon: p.logo_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
+                      alt={p.provider_name}
+                      className="w-6 h-6 object-contain"
+                    />
+                  ) : null,
+                  name: p.provider_name,
+                }))}
               />
             ))}
           </div>
         )}
 
-        {/* PAGINATION (außer Trending) */}
+        {/* PAGINATION */}
         {sortOption !== "trending" && (
           <div className="flex justify-center items-center gap-4">
             <button
