@@ -169,7 +169,7 @@ const [viewMode, setViewMode] = useState("grid");
     };
   }, [movies, bookmarkLoadingStates, viewMode]);
 
-  if (globalLoading)
+  if (globalLoading && movies.length === 0)
     return <div className="py-20 text-center text-white">Loading…</div>;
   if (error) return <div className="py-20 text-center text-red-500">{error}</div>;
 
