@@ -89,18 +89,21 @@ export default function MovieCard({
     `}>
       {/* Poster */}
       <div className="relative w-full flex-shrink-0 aspect-[2/3]">
-        <img
-          src={getPosterUrl(details.poster_path, 'w500')}
-          alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {/* Link nur um das Poster */}
+        <Link to={`/movie/${mediaId}`} className="absolute inset-0 z-10">
+          <img
+            src={getPosterUrl(details.poster_path, 'w500')}
+            alt={title}
+            className="object-cover w-full h-full"
+          />
+        </Link>
 
-        {/* Bookmark */}
+        {/* Bookmark-Button */}
         <button
           type="button"
           onClick={handleBookmarkClick}
           className={`
-            absolute top-[-1px] left-3 w-[34px] h-[45px] z-10
+            absolute top-[-1px] left-3 w-[34px] h-[45px] z-20
             ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
             transition-transform ease-out
           `}
@@ -116,8 +119,8 @@ export default function MovieCard({
               />}
         </button>
 
-        {/* Score */}
-        <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
+        {/* Score Badge */}
+        <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1 z-20">
           <Star className="w-4 h-4 text-yellow-400 fill-current"/>
           <span className="text-white font-medium text-[16px]">
             {details.vote_average.toFixed(1)}
@@ -128,22 +131,25 @@ export default function MovieCard({
       {/* Text */}
       <div className="flex-1 bg-[#141414] px-3 py-2 flex items-center justify-between rounded-b-2xl">
         <div>
-          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight">
-            {title}
-          </h3>
-          {/*  ── meta row: now kept on one line ── */}
-          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1 whitespace-nowrap">
+          {/* Link nur um den Titel */}
+          <Link to={`/movie/${mediaId}`} className="block">
+            <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight hover:underline">
+              {title}
+            </h3>
+          </Link>
+          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1">
             {year && <span>{year}</span>}<span>•</span>
             <span>{ratingFixed}</span><span>•</span>
             <span>{runtimeStr}</span>
           </div>
         </div>
 
+        {/* Drei-Punkte-Menü */}
         {onMenuClick && (
           <button
             type="button"
             onClick={handleMenuClick}
-            className="p-1 rounded-full bg-white text-gray-900 hover:bg-gray-700/80 hover:text-white transition-colors"
+            className="p-1 rounded-full bg-white text-gray-900 hover:bg-gray-700/80 hover:text-white transition-colors z-20"
           >
             <MoreHorizontal className="w-5 h-5"/>
           </button>
