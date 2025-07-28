@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, Circle, CircleCheckBig, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -48,21 +48,44 @@ function AdvancedSearch() {
         onChange,
         children,
         className = "",
-    }) => (
-        <div
-            className={cn("flex items-center gap-[2px] cursor-pointer", className)}
-            onClick={() => onChange(value)}
-        >
-            <div className="w-[25px] h-[25px] flex items-center justify-center">
-                <div className="w-[15px] h-[15px] rounded-full border border-white/50 flex items-center justify-center">
-                    {currentValue === value && (
-                        <div className="w-[7px] h-[7px] rounded-full bg-movie-accent" />
+    }) => {
+        const isSelected = currentValue === value;
+
+        return (
+            <div
+                className={cn(
+                    "flex items-center gap-[8px] cursor-pointer",
+                    className
+                )}
+                onClick={() => onChange(isSelected ? "all" : value)}
+                role="radio"
+                aria-checked={isSelected}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        onChange(isSelected ? "all" : value);
+                    }
+                }}
+            >
+                {/* Outer circle with inner dot */}
+                <div className="w-[25px] h-[25px] flex items-center justify-center">
+                    {isSelected ? (
+                        <CircleCheckBig size={16} strokeWidth={3}  />
+                    ) : (
+                        <Circle size={16} />
                     )}
                 </div>
+
+                {/* Label text */}
+                <span
+                    className={"text-movie-text text-[12px] transition-colors"}
+                >
+                    {children}
+                </span>
             </div>
-            <span className="text-movie-text text-[10px]">{children}</span>
-        </div>
-    );
+        );
+    };
+
 
     const TypeButton = ({
         type,
@@ -73,20 +96,21 @@ function AdvancedSearch() {
         <button
             className={cn(
                 "flex-1 h-full rounded-[10px] flex items-center justify-center cursor-pointer transition-colors",
-                isActive ? "bg-movie-accent" : "bg-transparent",
+                isActive ? "bg-movie-accent" : "bg-transparent"
             )}
             onClick={onClick}
         >
             <span
                 className={cn(
-                    "text-[14px] font-medium",
-                    isActive ? "text-white" : "text-movie-text",
+                    "text-[14px]",
+                    isActive ? "text-white font-bold underline" : "text-movie-text font-medium"
                 )}
             >
                 {label}
             </span>
         </button>
     );
+
 
     const DropdownButton = ({
         label,
@@ -107,48 +131,9 @@ function AdvancedSearch() {
         </div>
     );
 
-    const SliderSection = ({
-        title,
-        range,
-        onRangeChange,
-        min,
-        max,
-        step = 1,
-        labels,
-    }) => (
-        <div className="w-full px-[16px] flex flex-col gap-[10px]">
-            <div className="flex items-center">
-                <span className="text-white text-[16px] font-medium">{title}</span>
-            </div>
-            <div className="relative">
-                <Slider
-                    value={range}
-                    onValueChange={(val) => {
-                        console.log("Slider changed:", val);
-                        onRangeChange(val);
-                    }}
-                    min={min}
-                    max={max}
-                    step={step}
-                    className="w-full"
-                />
-                <div className="flex justify-between mt-2 text-[#B7B7B7] text-[15px]">
-                    <span>{labels.min}</span>
-                    {labels.mid && <span>{labels.mid}</span>}
-                    <span>{labels.max}</span>
-                </div>
-            </div>
-        </div>
-    );
-
-
-
     return (
 
-        <div className="w-full bg-movie-bg font-poppins flex items-center justify-center p-4">
-            <div className="w-full max-w-[666px] relative">
-                {/* Main Container */}
-                <div className="w-full bg-movie-bg rounded-[50px] border border-movie-card">
+                <div className="w-full bg-movie-bg rounded-[50px] border-2 border-movie-card border-red-600 ">
                     <div className="p-[28px]">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[65px]">
                             {/* Left Column */}
@@ -205,8 +190,9 @@ function AdvancedSearch() {
                                     <Input
                                         placeholder="From Year"
                                         value={fromYear}
+                                        maxLength={4}
                                         onChange={(e) => setFromYear(e.target.value)}
-                                        className="h-[37px] bg-movie-card border-none text-movie-text placeholder:text-movie-text/70"
+                                        className="h-[37px] bg-movie-card border-none text-black placeholder:text-movie-text/70"
                                     />
                                 </div>
 
@@ -302,7 +288,8 @@ function AdvancedSearch() {
                                         placeholder="To Year"
                                         value={toYear}
                                         onChange={(e) => setToYear(e.target.value)}
-                                        className="h-[37px] bg-movie-card border-none text-movie-text placeholder:text-movie-text/70"
+                                        maxLength={4}
+                                        className="h-[37px] bg-movie-card border-none text-black placeholder:text-movie-text/70"
                                     />
                                 </div>
 
@@ -354,8 +341,7 @@ function AdvancedSearch() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+       
     );
 }
 // Standard-Export für Kompatibilität (optional, falls noch genutzt)

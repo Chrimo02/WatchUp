@@ -190,20 +190,12 @@ export default function DiscoveryPage() {
         <div className="absolute bottom-4 right-8 flex items-center space-x-3">
           {/* FILTER */}
           <Popover className="relative">
-            <Popover.Button className="flex items-center gap-1 bg-gray-800 px-4 py-2 rounded">
+            <Popover.Button className="flex items-center gap-1 bg-gray-800 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-600">
               <FilterIcon className="w-5 h-5 text-white" />
               <span>Filter</span>
               <ChevronDown className="w-4 h-4 text-white" />
             </Popover.Button>
-            <Popover.Panel
-              className="
-                absolute right-0 top-full mt-2
-                w-screen max-w-[90vw] sm:w-[600px]
-                bg-[#141414] rounded-[1rem]
-                border border-white z-50
-                max-h-[80vh] overflow-auto
-              "
-            >
+            <Popover.Panel className="absolute left-[-200px] w-[600px] bg-[#141414] rounded-[50px] shadow-lg z-20">
               <AdvancedSearch onSearch={setFilters} />
             </Popover.Panel>
           </Popover>
