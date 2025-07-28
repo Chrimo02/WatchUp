@@ -5,6 +5,7 @@ import MovieSlider from '../components/MovieSlider';
 import TrailerSlider from '../components/TrailerSlider';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useMediaTransforms } from '../hooks/useMediaTransforms';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
   const { 
@@ -36,9 +37,11 @@ const HomePage = () => {
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { transformMovieData, transformTVShowData } = useMediaTransforms();
 
+  
   const [accountStatesLoaded, setAccountStatesLoaded] = useState(false);
   const [isLoadingAccountStates, setIsLoadingAccountStates] = useState(false);
 
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -142,11 +145,15 @@ const HomePage = () => {
 
 
 
-  const handleViewAll = (section, type) => {
-    console.log(`View all ${type} for ${section}`);
-    // Here you would navigate to a dedicated page showing all items 
-    //TODO
-  };
+const handleViewAll = (section, type) => {
+  if (section === 'trending') {
+    navigate('/discover', { state: { preset: 'trending' } });
+  }else if (section === 'popular') {
+    navigate('/discover', { state: { preset: 'popular' } });
+  }else if (section === 'topRated') {
+    navigate('/discover', { state: { preset: 'topRated' } });
+  }
+};
 
   const handleRetry = () => {
 
@@ -230,7 +237,7 @@ const HomePage = () => {
           seriesItems={transformTVShowData(topRatedTVShows)}
           onBookmarkToggle={handleBookmarkToggle}
           showViewAll={true}
-          onViewAll={(type) => handleViewAll('top-rated', type)}
+          onViewAll={(type) => handleViewAll('topRated', type)}
           showTabSwitcher={true}
           defaultTab="movies"
           bookmarkLoadingStates={bookmarkLoadingStates}

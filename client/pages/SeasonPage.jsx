@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { getTVShowDetails, getSeasonDetails } from '../utils/api';
 import SeasonListComponent from '../components/SeasonListComponent';
+import RatingModal from '../components/MovieSeriesPage/RatingModal';
+import { useAuth } from '../contexts/AuthContext';  // adjust path if needed
 
 export default function SeasonPage() {
   const { tvId, seasonNumber } = useParams();
@@ -10,6 +12,15 @@ export default function SeasonPage() {
 
   const [show, setShow] = useState(null);
   const [season, setSeason] = useState(null);
+
+  const [ratingEpisodeId, setRatingEpisodeId] = useState(null);
+  const [currentRating, setCurrentRating] = useState(0);
+  const [tempRating, setTempRating] = useState(0);
+
+  const [userRatings, setUserRatings] = useState(() => {
+    return JSON.parse(localStorage.getItem('userRatings')|| '{}')
+  });
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     // fetch show backdrop & name
@@ -25,6 +36,35 @@ export default function SeasonPage() {
       </div>
     );
   }
+
+  const openRatingModal = (episodeId) => {
+    setRatingEpisodeId(episodeId);
+    setCurrentRating(userRatings[episodeId] || 0);
+    setTempRating(userRatings[episodeId] || 0);
+  };
+
+  const closeRatingModal = () => {
+    setRatingEpisodeId(null);
+  };
+
+  const submitRating = (newRating) => {
+    setUserRatings(prev => {
+      const next = { ...prev, [ratingEpisodeId]: newRating };
+      localStorage.setItem('userRatings', JSON.stringify(next));
+      return next;
+    });
+    closeRatingModal();
+  };
+  
+  const clearRating = () => {
+    setUserRatings(prev => {
+      const next = { ...prev };
+      delete next[ratingEpisodeId];
+      localStorage.setItem('userRatings', JSON.stringify(next));
+      return next;
+    });
+    closeRatingModal();
+  };  
 
   const backdropUrl = show.backdrop_path
     ? `https://image.tmdb.org/t/p/original${show.backdrop_path}`
@@ -47,6 +87,28 @@ export default function SeasonPage() {
           <ArrowLeft className="w-6 h-6" />
           <span className="text-lg font-medium">Back to Series</span>
         </button>
+
+        {/* Next Season Button */}
+        {Number(seasonNumber) < show.number_of_seasons && (
+          <button
+            onClick={() => navigate(`/series/${tvId}/season/${Number(seasonNumber) + 1}`)}
+            className="absolute top-4 right-4 px-4 py-2 border border-gray-700 rounded-lg text-white hover:bg-white/10 transition flex items-center gap-2"
+          >
+            <span className="text-lg font-medium">Next Season</span>
+            <ArrowRight className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Previous Season Button */}
+        {Number(seasonNumber) > 1 && (
+          <button
+            onClick={() => navigate(`/series/${tvId}/season/${Number(seasonNumber) - 1}`)}
+            className="absolute top-4 right-52 px-4 py-2 border border-gray-600 rounded-lg text-white hover:bg-white/10 transition flex items-center gap-2"
+          >
+            <ArrowLeft className="w-6 h-6" />
+            <span className="text-lg font-medium">Previous Season</span>
+          </button>
+        )}
 
         {/* Season poster & title */}
         <div className="absolute bottom-6 left-4 flex items-end gap-4">
@@ -84,14 +146,27 @@ export default function SeasonPage() {
               vote_average={ep.vote_average}
               overview={ep.overview}
               still_path={ep.still_path}
-              onRate={(episodeId) => {
-                /* your rate handler */
-                console.log('Rate ep', episodeId);
-              }}
+              yourRating={userRatings[ep.id] || 0}
+              isAuthenticated={isAuthenticated}      // pull from your AuthContext
+              onRate={() => openRatingModal(ep.id)}
             />
           ))}
         </div>
       </div>
+       {/*Render the modal*/}
+       <RatingModal
+        isOpen={ratingEpisodeId !== null}
+        onClose={closeRatingModal}
+        onSubmit={submitRating}
+        tempRating={tempRating}
+        setTempRating={setTempRating}
+        title={
+          season.episodes.find(e => e.id === ratingEpisodeId)?.name
+          || ''
+        }
+        currentRating={currentRating}
+        onClearRating={currentRating > 0 ? clearRating : undefined}
+      />
     </div>
   );
 }
