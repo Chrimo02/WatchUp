@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import AddToBookmark from "../assets/AddToBookmark.svg";
 import Bookmarked     from "../assets/Bookmarked.svg";
 import Star           from "../assets/Star.svg";
+import DEFAULT_POSTER from '../assets/placeholder-poster.png';
 
 export default function SimpleMovieCard({
   poster,
@@ -15,6 +16,7 @@ export default function SimpleMovieCard({
   type,
   className = ""      
 }) {
+  
   const handleBookmarkClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,7 +33,7 @@ export default function SimpleMovieCard({
           src={poster}
           alt={title}
           className="w-full h-[281px] object-cover rounded-[10px]"
-          onError={(e) => (e.target.src = "/placeholder-poster.jpg")}
+          onError={(e) => (e.target.src = DEFAULT_POSTER)}
         />
 
         {/* Bookmark button */}
