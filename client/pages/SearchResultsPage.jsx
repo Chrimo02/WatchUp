@@ -31,24 +31,47 @@ export default function SearchResultsPage() {
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { user, sessionId } = useAuth();
 
-  const [filter, setFilter]       = useState('all');
-  const [items, setItems]         = useState([]);
-  const [total, setTotal]         = useState(0);
-  const [movieTotal, setMovieTotal]   = useState(0);
-  const [tvTotal, setTvTotal]         = useState(0);
+  const [filter, setFilter]         = useState('all');
+  const [items, setItems]           = useState([]);
+  const [total, setTotal]           = useState(0);
+  const [allTotal, setAllTotal]     = useState(0);      // NEU: Gesamtzahl unabhängig vom Filter
+  const [movieTotal, setMovieTotal] = useState(0);
+  const [tvTotal, setTvTotal]       = useState(0);
   const [personTotal, setPersonTotal] = useState(0);
-  const [page, setPage]           = useState(1);
-  const [loading, setLoading]     = useState(false);
+  const [page, setPage]             = useState(1);
+  const [loading, setLoading]       = useState(false);
   const [watchProvidersMap, setWatchProvidersMap] = useState({});
 
-  // Reset page on new query or filter
-  useEffect(() => { setPage(1); }, [query, filter]);
+  // 1) Reset page on new query or filter
+  useEffect(() => {
+    setPage(1);
+  }, [query, filter]);
 
-  // Main search
+  // 2) Fetch Gesamt-Anzahl („All“) einmal pro Query
   useEffect(() => {
     let cancelled = false;
     if (!query) {
-      setItems([]); setTotal(0); setLoading(false);
+      setAllTotal(0);
+      return () => { cancelled = true; };
+    }
+    (async () => {
+      try {
+        const data = await searchMultiByQuery(query, 1);
+        if (!cancelled) setAllTotal(data.total_results || 0);
+      } catch (err) {
+        console.error('Failed to fetch all-count', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [query, searchMultiByQuery]);
+
+  // 3) Hauptsuche je nach Filter
+  useEffect(() => {
+    let cancelled = false;
+    if (!query) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
       return () => { cancelled = true; };
     }
     (async () => {
@@ -66,15 +89,17 @@ export default function SearchResultsPage() {
           data.results = data.results.map(i => ({ ...i, media_type: 'person' }));
         } else {
           data = await searchMultiByQuery(query, page);
-          // bereits sortiert im Context
+          // data.results ist bereits nach Populärität sortiert
         }
-        if (cancelled) return;
-        setItems(data.results || []);
-        setTotal(data.total_results || 0);
+        if (!cancelled) {
+          setItems(data.results || []);
+          setTotal(data.total_results || 0);
+        }
       } catch (err) {
         if (!cancelled) {
           console.error('Search failed', err);
-          setItems([]); setTotal(0);
+          setItems([]);
+          setTotal(0);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -89,11 +114,13 @@ export default function SearchResultsPage() {
     searchMultiByQuery,
   ]);
 
-  // Counts for buttons
+  // 4) Counts für Movie/TV/Person
   useEffect(() => {
     let cancelled = false;
     if (!query) {
-      setMovieTotal(0); setTvTotal(0); setPersonTotal(0);
+      setMovieTotal(0);
+      setTvTotal(0);
+      setPersonTotal(0);
       return () => { cancelled = true; };
     }
     (async () => {
@@ -103,10 +130,11 @@ export default function SearchResultsPage() {
           searchTVShowsByQuery(query, 1),
           searchPeopleByQuery(query, 1),
         ]);
-        if (cancelled) return;
-        setMovieTotal(m.total_results || 0);
-        setTvTotal(tv.total_results || 0);
-        setPersonTotal(p.total_results || 0);
+        if (!cancelled) {
+          setMovieTotal(m.total_results || 0);
+          setTvTotal(tv.total_results || 0);
+          setPersonTotal(p.total_results || 0);
+        }
       } catch (err) {
         if (!cancelled) console.error('Count-fetch failed', err);
       }
@@ -114,10 +142,10 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMoviesByQuery, searchTVShowsByQuery, searchPeopleByQuery]);
 
-  // Watch providers
+  // 5) Watch-Providers für Movies/TV
   useEffect(() => {
     let cancelled = false;
-    const relevant = items.filter(i => ['movie','tv'].includes(i.media_type));
+    const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
     if (relevant.length === 0) {
       setWatchProvidersMap({});
       return () => { cancelled = true; };
@@ -135,7 +163,8 @@ export default function SearchResultsPage() {
             rent:   country.rent     || [],
             buy:    country.buy      || []
           };
-        } catch {
+        } catch (err) {
+          console.error(`Providers failed for ${item.media_type} ${item.id}`, err);
           map[item.id] = { stream: [], rent: [], buy: [] };
         }
       }
@@ -144,8 +173,9 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [items, region]);
 
+  // Counts-Objekt: all = allTotal (fix), others dynamisch
   const counts = {
-    all:    total,
+    all:    allTotal,
     movie:  movieTotal,
     tv:     tvTotal,
     person: personTotal,
@@ -202,43 +232,41 @@ export default function SearchResultsPage() {
             ? <div className="text-center py-10 text-gray-400">No results found.</div>
             : (
               <div className="flex flex-col gap-4">
-                {items.map(item => (
+                {items.map(item =>
                   item.media_type === 'person'
                     ? <PersonListItem key={item.id} person={item} />
-                    : (() => {
-                        const prov = watchProvidersMap[item.id] || { stream: [], rent: [], buy: [] };
-                        const streaming = [...prov.stream, ...prov.rent, ...prov.buy]
-                          .map(p => ({
-                            icon: p.logo_path
+                    : (
+                      <ListComponent
+                        key={item.id}
+                        mediaType={item.media_type}
+                        mediaId={item.id}
+                        bookmarked={isInWatchlist(item.id, item.media_type)}
+                        isLoading={bookmarkLoadingStates.has(item.id)}
+                        streamingPlatforms={
+                          [...(watchProvidersMap[item.id]?.stream || []),
+                           ...(watchProvidersMap[item.id]?.rent || []),
+                           ...(watchProvidersMap[item.id]?.buy || [])]
+                            .map(p => p.logo_path
                               ? <img
                                   key={p.provider_id}
                                   src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
                                   alt={p.provider_name}
                                   className="w-6 h-6 object-contain"
                                 />
-                              : null,
-                            name: p.provider_name,
-                          }));
-                        return (
-                          <ListComponent
-                            key={item.id}
-                            mediaType={item.media_type}
-                            mediaId={item.id}
-                            bookmarked={isInWatchlist(item.id, item.media_type)}
-                            isLoading={bookmarkLoadingStates.has(item.id)}
-                            streamingPlatforms={streaming}
-                            onBookmarkToggle={handleBookmarkToggle}
-                            onRate={val => rateMovie(item.id, sessionId, val)}
-                            onFavorite={() =>
-                              markAsFavorite(user.id, sessionId, item.id, item.media_type, true)
-                            }
-                            onAddToList={() =>
-                              addToWatchlist(user.id, sessionId, item.id, item.media_type, true)
-                            }
-                          />
-                        );
-                      })()
-                ))}
+                              : null
+                            )
+                        }
+                        onBookmarkToggle={handleBookmarkToggle}
+                        onRate={val => rateMovie(item.id, sessionId, val)}
+                        onFavorite={() =>
+                          markAsFavorite(user.id, sessionId, item.id, item.media_type, true)
+                        }
+                        onAddToList={() =>
+                          addToWatchlist(user.id, sessionId, item.id, item.media_type, true)
+                        }
+                      />
+                    )
+                )}
               </div>
             )
         }
