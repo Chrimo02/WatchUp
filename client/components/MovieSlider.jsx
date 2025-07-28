@@ -1,3 +1,4 @@
+// MovieSlider.jsx
 import { useState, useRef, useEffect } from "react";
 import SimpleMovieCard from "./SimpleMovieCard";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,77 +12,75 @@ const MovieSlider = ({
   onViewAll,
   showTabSwitcher = true,
   defaultTab = "movies",
-  bookmarkLoadingStates = new Set() // Accept loading states from parent
+  bookmarkLoadingStates = new Set()
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const scrollContainerRef = useRef(null);
+  const [fadeLeft, setFadeLeft] = useState(0);
+  const [fadeRight, setFadeRight] = useState(1);
+  const scrollRef = useRef(null);
 
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: "smooth" });
-    }
+  const updateScroll = () => {
+    const c = scrollRef.current;
+    if (!c) return;
+    const { scrollLeft, scrollWidth, clientWidth } = c;
+    const maxScroll = scrollWidth - clientWidth;
+
+    // binary flags
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < maxScroll - 1);
+
+    // continuous fade over half a card width
+    const firstCard = c.children[0];
+    const cardWidth = firstCard?.offsetWidth ?? clientWidth;
+    const threshold = cardWidth / 2;
+
+    const rightOpacity = Math.max(0, Math.min(1, (threshold - scrollLeft) / threshold));
+    const leftOpacity  = Math.max(0, Math.min(1, (scrollLeft - threshold) / threshold));
+    setFadeRight(rightOpacity);
+    setFadeLeft(leftOpacity);
   };
 
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
-  };
-
-  const onScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
-    }
+  const scrollBy = (distance) => {
+    scrollRef.current?.scrollBy({ left: distance, behavior: "smooth" });
   };
 
   const switchTab = (tab) => {
     setActiveTab(tab);
-    // Reset scroll position when switching tabs
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ left: 0, behavior: "smooth" });
-    }
+    scrollRef.current?.scrollTo({ left: 0, behavior: "smooth" });
   };
 
   const handleBookmarkToggle = async (itemId, itemType) => {
-    console.log(`Bookmark toggle initiated for ${itemType} ${itemId}`);
-    
     try {
       await onBookmarkToggle(itemId, itemType);
-      console.log(`Bookmark toggle completed for ${itemType} ${itemId}`);
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
     }
   };
 
   useEffect(() => {
-    onScroll();
+    updateScroll();
   }, [activeTab, movieItems, seriesItems]);
 
-  // Get current items based on active tab
-  const currentItems = activeTab === "movies" ? movieItems : seriesItems;
+  useEffect(() => {
+    const c = scrollRef.current;
+    if (!c) return;
+    c.scrollLeft = 0;
+    updateScroll();
+  }, [activeTab]);
 
-  // Don't render if no items for either tab
-  if ((!movieItems || movieItems.length === 0) && (!seriesItems || seriesItems.length === 0)) {
-    return null;
-  }
+  if ((!movieItems.length) && (!seriesItems.length)) return null;
+  const currentItems = activeTab === "movies" ? movieItems : seriesItems;
 
   return (
     <div className="flex flex-col gap-4 mb-8">
       {/* Header */}
       <div className="flex items-center justify-between w-full h-11 relative">
-        <h2 className="text-white text-2xl font-bold leading-6">
-          {title}
-        </h2>
-
+        <h2 className="text-white text-2xl font-bold leading-6">{title}</h2>
         <div className="flex items-center gap-4">
-          {/* Tab Switcher */}
-          {showTabSwitcher && seriesItems && seriesItems.length > 0 && (
+          {showTabSwitcher && seriesItems.length > 0 && (
             <div className="relative inline-flex rounded-full border border-primary p-1">
-              {/* Sliding background */}
               <div
                 className="absolute top-1 bottom-1 rounded-full bg-white transition-all duration-300 ease-in-out"
                 style={{
@@ -89,34 +88,26 @@ const MovieSlider = ({
                   width: "calc(50% - 4px)",
                 }}
               />
-              
-              {/* Button container */}
               <div className="relative z-10 flex">
                 <button
                   onClick={() => switchTab("movies")}
                   className="px-4 py-1.5 text-sm font-medium capitalize transition-colors duration-300 rounded-full min-w-[70px]"
-                  style={{
-                    color: activeTab === "movies" ? "#B91E1E" : "#FFF",
-                  }}
+                  style={{ color: activeTab === "movies" ? "#B91E1E" : "#FFF" }}
                 >
                   Movies
                 </button>
                 <button
                   onClick={() => switchTab("series")}
                   className="px-4 py-1.5 text-sm font-medium capitalize transition-colors duration-300 rounded-full min-w-[70px]"
-                  style={{
-                    color: activeTab === "series" ? "#B91E1E" : "#FFF",
-                  }}
+                  style={{ color: activeTab === "series" ? "#B91E1E" : "#FFF" }}
                 >
                   Series
                 </button>
               </div>
             </div>
           )}
-
-          {/* View All Button */}
           {showViewAll && onViewAll && (
-            <button 
+            <button
               onClick={() => onViewAll(activeTab)}
               className="flex items-center gap-1 px-2 py-1 text-white text-lg leading-6 font-normal hover:opacity-80 transition-opacity"
             >
@@ -147,36 +138,35 @@ const MovieSlider = ({
         </div>
       </div>
 
-      {/* Scrollable Content */}
+      {/* Slider + Gradients */}
       <div className="relative">
         {/* Left Arrow */}
         {canScrollLeft && (
           <button
-            onClick={scrollLeft}
+            onClick={() => scrollBy(-300)}
             className="absolute left-[-20px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
           >
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
         )}
 
-        {/* Right Arrow */}
-        {canScrollRight && (
-          <button
-            onClick={scrollRight}
-            className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
-          >
-            <ChevronRight className="w-6 h-6 text-white" />
-          </button>
-        )}
-
-        {/* Movie Cards Container */}
+        {/* Left Fade */}
         <div
-          ref={scrollContainerRef}
-          onScroll={onScroll}
+          className="pointer-events-none absolute left-0 top-0 h-full w-16 transition-opacity duration-300"
+          style={{
+            background: 'linear-gradient(to right, #000, transparent)',
+            opacity: fadeLeft
+          }}
+        />
+
+        {/* Scroll Container */}
+        <div
+          ref={scrollRef}
+          onScroll={updateScroll}
           className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {currentItems.map((item) => (
+          {currentItems.map(item => (
             <div key={`${item.type}-${item.id}`} className="flex-shrink-0">
               <SimpleMovieCard
                 id={item.id}
@@ -191,6 +181,25 @@ const MovieSlider = ({
             </div>
           ))}
         </div>
+
+        {/* Right Fade */}
+        <div
+          className="pointer-events-none absolute right-0 top-0 h-full w-20 transition-opacity duration-300"
+          style={{
+            background: 'linear-gradient(to left, #141413, transparent)',
+            opacity: fadeRight
+          }}
+        />
+
+        {/* Right Arrow */}
+        {canScrollRight && (
+          <button
+            onClick={() => scrollBy(300)}
+            className="absolute right-[-20px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
+        )}
       </div>
     </div>
   );

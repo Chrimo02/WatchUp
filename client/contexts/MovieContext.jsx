@@ -13,6 +13,7 @@ import {
   getTVShowVideos,
   searchTVShows,
   discoverTVShows,
+  searchMulti,
   addToWatchlist,
   getUpcomingMoviesWithVideos,
   getMovieAccountStates,
@@ -31,7 +32,7 @@ const MovieContext = createContext({
   airingTodayTVShows: [],
   genres: [],
   upcomingMoviesWithTrailers: [],
-  accountStates: {}, // New: cache for account states
+  accountStates: {}, 
   fetchTrendingMovies: async () => {},
   fetchPopularMovies: async () => {},
   fetchTopRatedMovies: async () => {},
@@ -46,6 +47,7 @@ const MovieContext = createContext({
   fetchTVShowVideos: async () => ({}),
   searchMoviesByQuery: async () => ({}),
   searchTVShowsByQuery: async () => ({}),
+  searchMultiByQuery: async () => ({}),
   discoverMoviesByFilter: async () => ({}),
   discoverTVShowsByFilter: async () => ({}),
   fetchGenres: async () => {},
@@ -359,6 +361,20 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  const searchMultiByQuery = async (query, page = 1) => {
+    setLoading(true); setError(null);
+    try {
+      const { data } = await searchMulti(query, page);
+      return data;
+    } catch (err) {
+      setError('Failed to search multi');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const discoverMoviesByFilter = async (params) => {
     setLoading(true);
     setError(null);
@@ -458,6 +474,7 @@ export const MovieProvider = ({ children }) => {
         fetchTVShowVideos,
         searchMoviesByQuery,
         searchTVShowsByQuery,
+        searchMultiByQuery,
         discoverMoviesByFilter,
         discoverTVShowsByFilter,
         fetchGenres,

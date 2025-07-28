@@ -13,12 +13,15 @@ export default {
       fontFamily: {
         limelight: ["Limelight", "cursive"],
         poppins: ["Poppins", "sans-serif"],
+        sans:    ["Inter",    "sans-serif"],
       },
       colors: {
         primary: "#b91c1c", 
-        background: "#141414"
+        background: "#141415"
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/line-clamp'),
+  ],
 };
