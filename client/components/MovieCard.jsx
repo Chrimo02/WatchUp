@@ -1,16 +1,12 @@
 // src/components/MovieCard.jsx
-import React, { useEffect, useState } from 'react'
-import PropTypes from 'prop-types'
-import { useMovies } from '../contexts/MovieContext'
-import { useLanguage } from '../contexts/LanguageContext'
-import {
-  getPosterUrl,
-  getMovieReleaseDates,
-  getAgeRatingForRegion,
-} from '../utils/api'
-import { Star, MoreHorizontal } from 'lucide-react'
-import AddToBookmark from '../assets/AddToBookmark.svg?url'
-import Bookmarked    from '../assets/Bookmarked.svg?url'
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
+import { useMovies } from '../contexts/MovieContext';
+import { getPosterUrl } from '../utils/api';
+import { Star, MoreHorizontal } from 'lucide-react';
+import AddToBookmark from '../assets/AddToBookmark.svg?url';
+import Bookmarked      from '../assets/Bookmarked.svg?url';
 
 export default function MovieCard({
   mediaType,
@@ -19,91 +15,72 @@ export default function MovieCard({
   isLoading  = false,
   onBookmarkToggle,
   onMenuClick,
-  className  = '',
+  className = '',
 }) {
-  const { fetchMovieDetails, fetchTVShowDetails } = useMovies()
-  const { region } = useLanguage()
+  const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
+  const [details, setDetails] = useState(null);
 
-  const [details, setDetails]     = useState(null)
-  const [ageRating, setAgeRating] = useState(null)
-
-  /* ─── load basic item details ─── */
   useEffect(() => {
     (async () => {
       try {
         const res = mediaType === 'movie'
           ? await fetchMovieDetails(mediaId)
-          : await fetchTVShowDetails(mediaId)
-        setDetails(res)
+          : await fetchTVShowDetails(mediaId);
+        setDetails(res);
       } catch (err) {
-        console.error('Error loading details', err)
+        console.error('Error loading details', err);
       }
-    })()
-  }, [mediaType, mediaId, fetchMovieDetails, fetchTVShowDetails])
+    })();
+  }, [mediaType, mediaId, fetchMovieDetails, fetchTVShowDetails]);
 
-  /* ─── load region certificate once details are ready ─── */
-  useEffect(() => {
-    if (!details || mediaType !== 'movie') {
-      setAgeRating(details?.adult ? '18+' : '13+')
-      return
-    }
-    ;(async () => {
-      try {
-        const { data } = await getMovieReleaseDates(mediaId)
-        const cert =
-          getAgeRatingForRegion(data, region) || (details.adult ? '18+' : 'NR')
-        setAgeRating(cert)
-      } catch (err) {
-        console.error('Error loading certificate', err)
-        setAgeRating(details.adult ? '18+' : 'NR')
-      }
-    })()
-  }, [details, mediaType, mediaId, region])
+  if (!details) return null;
 
-  if (!details) return null
-
-  const title      = details.title || details.name
-  const date       = details.release_date || details.first_air_date
-  const year       = date ? new Date(date).getFullYear() : ''
+  const title      = details.title || details.name;
+  const date       = details.release_date || details.first_air_date;
+  const year       = date ? new Date(date).getFullYear() : '';
+  const ageRating  = details.adult ? '18+' : '13+';
   const runtimeMin = mediaType === 'movie'
     ? details.runtime
-    : (details.episode_run_time?.[0] || 0)
-  const runtimeStr  = `${Math.floor(runtimeMin / 60)}h ${runtimeMin % 60}m`
-  const ratingFixed = (ageRating || '').replace('-', '‑') // non‑breaking hyphen
+    : (details.episode_run_time?.[0] || 0);
+  const runtimeStr = `${Math.floor(runtimeMin/60)}h ${runtimeMin%60}m`;
 
   const handleBookmarkClick = e => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!isLoading) onBookmarkToggle(mediaId, mediaType)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoading) onBookmarkToggle(mediaId, mediaType);
+  };
 
   const handleMenuClick = e => {
-    e.stopPropagation()
-    onMenuClick(mediaId)
-  }
+    e.stopPropagation();
+    onMenuClick(mediaId);
+  };
 
   return (
-    <div className={`
-      relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
-      ${className}
-    `}>
-      {/* Poster */}
+    <div className={`relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden ${className}`}>
+      {/* Poster + Overlays */}
       <div className="relative w-full flex-shrink-0 aspect-[2/3]">
-        {/* Link nur um das Poster */}
-        <Link to={`/movie/${mediaId}`} className="absolute inset-0 z-10">
+        {/* LINKED AREA */}
+        <Link to={`/${mediaType}/${mediaId}`} className="absolute inset-0 z-0">
           <img
             src={getPosterUrl(details.poster_path, 'w500')}
             alt={title}
-            className="object-cover w-full h-full"
+            className="w-full h-full object-cover"
           />
+          <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
+            <Star className="w-4 h-4 text-yellow-400 fill-current"/>
+            <span className="text-white font-medium text-[16px]">
+              {details.vote_average.toFixed(1)}
+            </span>
+          </div>
         </Link>
 
-        {/* Bookmark-Button */}
+        {/* Bookmark Button (outside the Link) */}
         <button
           type="button"
           onClick={handleBookmarkClick}
           className={`
-            absolute top-[-1px] left-3 w-[34px] h-[45px] z-20
+            absolute top-[-1px] left-3 z-10
+            w-[34px] h-[45px]
             ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
             transition-transform ease-out
           `}
@@ -116,35 +93,26 @@ export default function MovieCard({
                 src={bookmarked ? Bookmarked : AddToBookmark}
                 alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
                 className="w-full h-full object-contain"
-              />}
+              />
+          }
         </button>
-
-        {/* Score Badge */}
-        <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1 z-20">
-          <Star className="w-4 h-4 text-yellow-400 fill-current"/>
-          <span className="text-white font-medium text-[16px]">
-            {details.vote_average.toFixed(1)}
-          </span>
-        </div>
       </div>
 
-      {/* Text */}
+      {/* Text & Menu */}
       <div className="flex-1 bg-[#141414] px-3 py-2 flex items-center justify-between rounded-b-2xl">
-        <div>
-          {/* Link nur um den Titel */}
-          <Link to={`/movie/${mediaId}`} className="block">
-            <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight hover:underline">
-              {title}
-            </h3>
-          </Link>
+        {/* LINKED AREA */}
+        <Link to={`/${mediaType}/${mediaId}`} className="flex-1">
+          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight">
+            {title}
+          </h3>
           <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1">
             {year && <span>{year}</span>}<span>•</span>
-            <span>{ratingFixed}</span><span>•</span>
+            <span>{ageRating}</span><span>•</span>
             <span>{runtimeStr}</span>
           </div>
-        </div>
+        </Link>
 
-        {/* Drei-Punkte-Menü */}
+        {/* Menu Button (outside the Link) */}
         {onMenuClick && (
           <button
             type="button"
@@ -156,7 +124,7 @@ export default function MovieCard({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 MovieCard.propTypes = {
@@ -167,4 +135,4 @@ MovieCard.propTypes = {
   onBookmarkToggle: PropTypes.func,
   onMenuClick:      PropTypes.func,
   className:        PropTypes.string,
-}
+};
