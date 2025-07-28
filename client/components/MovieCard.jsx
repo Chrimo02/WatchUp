@@ -15,6 +15,7 @@ export default function MovieCard({
   bookmarked = false,
   isLoading  = false,
   onBookmarkToggle,
+  onMenuClick,
   onRate,
   onAddToList,
   onFavorite,
@@ -112,13 +113,10 @@ export default function MovieCard({
           </div>
         </div>
 
-        {/* More button + menu wrapper */}
-        <div ref={menuWrapperRef} className="relative">
+        {/* More button */}
+        {onMenuClick && (
           <button
-            onClick={e => {
-              e.stopPropagation();
-              setMenuOpen(open => !open);
-            }}
+            onClick={() => onMenuClick(mediaId)}
             className="
               p-1 rounded-full
               bg-white text-gray-900
@@ -128,29 +126,8 @@ export default function MovieCard({
           >
             <MoreHorizontal className="w-5 h-5" />
           </button>
-
-          {menuOpen && (
-            <div className="absolute bottom-[30px] right-0 z-20">
-              <MovieCardMenu
-                onRate={() => onRate(mediaId, mediaType)}
-                onAddToList={() => onAddToList(mediaId, mediaType)}
-                onFavorite={() => onFavorite(mediaId, mediaType)}
-              />
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 }
-
-MovieCard.propTypes = {
-  mediaType:        PropTypes.oneOf(['movie','tv']).isRequired,
-  mediaId:          PropTypes.number.isRequired,
-  bookmarked:       PropTypes.bool,
-  isLoading:        PropTypes.bool,
-  onBookmarkToggle: PropTypes.func,
-  onRate:           PropTypes.func,
-  onAddToList:      PropTypes.func,
-  onFavorite:       PropTypes.func,
-};

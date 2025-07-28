@@ -114,11 +114,3 @@ export default function SeriesCard({
     </div>
   );
 }
-
-SeriesCard.propTypes = {
-  mediaId:          PropTypes.number.isRequired,
-  bookmarked:       PropTypes.bool,
-  isLoading:        PropTypes.bool,
-  onBookmarkToggle: PropTypes.func,
-  onMenuClick:      PropTypes.func,
-};
