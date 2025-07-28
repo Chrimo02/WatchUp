@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../utils/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+} from 'react'
+import { auth } from '../utils/api'
+import { useToast } from '../hooks/use-toast'
 
+// 1) Create the context
 const AuthContext = createContext({
   isInitialized: false,
   isAuthenticated: false,
@@ -8,134 +15,129 @@ const AuthContext = createContext({
   sessionId: null,
   login: async () => {},
   logout: async () => {},
-  handleAuthCallback: async () => false,
-}); 
+})
 
-export const useAuth = () => useContext(AuthContext);
+// 2) Export the hook for consumption
+export const useAuth = () => useContext(AuthContext)
 
 export const AuthProvider = ({ children }) => {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
+  const { toast } = useToast()
 
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState(null)
+  const [sessionId, setSessionId] = useState(null)
+
+  // 3) Single initEffect with toast for errors
   useEffect(() => {
     const initAuth = async () => {
-      // Check for auth callback in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const requestToken = urlParams.get('request_token');
-      const approved = urlParams.get('approved');
-      
-      if (requestToken && approved === 'true') {
-        try {
-          await handleAuthCallback(requestToken);
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (error) {
-          console.error('Auth callback failed:', error);
-          alert('Authentication failed. Please try again.');
+      try {
+        const urlParams     = new URLSearchParams(window.location.search)
+        const requestToken = urlParams.get('request_token')
+        const approved     = urlParams.get('approved')
+        const storedSid    = localStorage.getItem('tmdb_session_id')
+
+        if (requestToken && approved === 'true') {
+          await handleAuthCallback(requestToken)
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          )
+        } else if (storedSid) {
+          const { data: accountData } = await auth.getAccount(storedSid)
+          setUser(accountData)
+          setSessionId(storedSid)
+          setIsAuthenticated(true)
         }
-      } else {
-        // Check for existing session
-        const storedSessionId = localStorage.getItem('tmdb_session_id');
-        
-        if (storedSessionId) {
-          try {
-            const { data: accountData } = await auth.getAccount(storedSessionId);
-            setUser(accountData);
-            setSessionId(storedSessionId);
-            setIsAuthenticated(true);
-          } catch (error) {
-            console.error('Failed to restore session:', error);
-            localStorage.removeItem('tmdb_session_id');
-          }
-        }
+      } catch (error) {
+        console.error('Auth init failed:', error)
+        toast({
+          title: 'Authentication failed',
+          description: error.message,
+          variant: 'destructive',
+        })
+      } finally {
+        setIsInitialized(true)
       }
-      
-      setIsInitialized(true);
-    };
+    }
 
-    initAuth();
-  }, []);
+    initAuth()
+  }, [])
 
+  // 4) login() remains largely the same, but with toast on failure
   const login = async () => {
     try {
-      // Step 1: Create request token
-      const { data: tokenData } = await auth.createRequestToken();
-      const requestToken = tokenData.request_token;
-      
-      if (!requestToken) {
-        throw new Error('Failed to create request token');
-      }
-      
-      // Step 2: Redirect to TMDB for user approval
-      const redirectUrl = window.location.origin + window.location.pathname;
-      const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
-      
-      // Store the request token for later use
-      localStorage.setItem('tmdb_request_token', requestToken);
-      
-      // Redirect to TMDB authentication page
-      window.location.href = authUrl;
-      
-    } catch (error) {
-      console.error('Login failed:', error);
-      alert('Failed to start authentication process. Please check your internet connection and try again.');
-    }
-  };
+      const { data: tokenData } = await auth.createRequestToken()
+      const requestToken        = tokenData.request_token
+      if (!requestToken) throw new Error('No request token returned')
 
+      const redirectUrl = window.location.origin + window.location.pathname
+      const authUrl     = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(
+        redirectUrl
+      )}`
+
+      localStorage.setItem('tmdb_request_token', requestToken)
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Login failed:', error)
+      toast({
+        title: 'Login failed',
+        description:
+          'Could not start authentication. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // 5) handleAuthCallback() no longer alerts, just toasts on success
+  const handleAuthCallback = async (requestToken) => {
+    const { data: sessionData } = await auth.createSession(requestToken)
+    const newSessionId           = sessionData.session_id
+    if (!newSessionId) {
+      throw new Error('Failed to create TMDB session')
+    }
+
+    localStorage.setItem('tmdb_session_id', newSessionId)
+    localStorage.removeItem('tmdb_request_token')
+
+    const { data: accountData } = await auth.getAccount(newSessionId)
+    setSessionId(newSessionId)
+    setUser(accountData)
+    setIsAuthenticated(true)
+
+    toast({
+      title: `Welcome, ${accountData.username}!`,
+      description: 'You are now signed in.',
+    })
+
+    return true
+  }
+
+  // 6) logout() swaps alert for toast
   const logout = async () => {
     try {
       if (sessionId) {
-        await auth.deleteSession(sessionId);
+        await auth.deleteSession(sessionId)
       }
     } catch (error) {
-      console.error('Logout API call failed:', error);
+      console.error('Logout API call failed:', error)
+      // (you could toast here if you like)
     } finally {
-      // Clear local storage regardless of API call success
-      localStorage.removeItem('tmdb_session_id');
-      localStorage.removeItem('tmdb_request_token');
-      
-      setIsAuthenticated(false);
-      setUser(null);
-      setSessionId(null);
-      
-      alert('Successfully signed out!');
-    }
-  };
+      localStorage.removeItem('tmdb_session_id')
+      localStorage.removeItem('tmdb_request_token')
+      setIsAuthenticated(false)
+      setUser(null)
+      setSessionId(null)
 
-  const handleAuthCallback = async (requestToken) => {
-    try {
-      // Step 3: Create session with approved request token
-      const { data: sessionData } = await auth.createSession(requestToken);
-      const newSessionId = sessionData.session_id;
-      
-      if (!newSessionId) {
-        throw new Error('Failed to create session');
-      }
-      
-      // Store session ID
-      localStorage.setItem('tmdb_session_id', newSessionId);
-      localStorage.removeItem('tmdb_request_token');
-      
-      // Step 4: Get account details
-      const { data: accountData } = await auth.getAccount(newSessionId);
-      
-      setSessionId(newSessionId);
-      setUser(accountData);
-      setIsAuthenticated(true);
-      
-      alert(`Welcome ${accountData.username}! You are now signed in with your TMDB account.`);
-      
-      return true;
-    } catch (error) {
-      console.error('Authentication callback failed:', error);
-      localStorage.removeItem('tmdb_request_token');
-      alert('Authentication failed. Please try signing in again.');
-      throw error;
+      toast({
+        title: 'Signed out',
+        description: 'You have successfully signed out.',
+      })
     }
-  };
+  }
 
+  // 7) Provide everything
   const value = {
     isInitialized,
     isAuthenticated,
@@ -144,7 +146,11 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     handleAuthCallback,
-  };
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
+}

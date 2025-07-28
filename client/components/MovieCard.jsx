@@ -1,5 +1,5 @@
 // src/components/MovieCard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useMovies } from '../contexts/MovieContext';
 import { getPosterUrl } from '../utils/api';
@@ -14,6 +14,7 @@ export default function MovieCard({
   isLoading  = false,
   onBookmarkToggle,
   onMenuClick,
+  className = '',
 }) {
   const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
   const [details, setDetails] = useState(null);
@@ -29,7 +30,7 @@ export default function MovieCard({
         console.error('Error loading details', err);
       }
     })();
-  }, [mediaType, mediaId]);
+  }, [mediaType, mediaId, fetchMovieDetails, fetchTVShowDetails]);
 
   if (!details) return null;
 
@@ -45,59 +46,67 @@ export default function MovieCard({
   const handleBookmarkClick = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (isLoading) return;
-    onBookmarkToggle(mediaId, mediaType);
+    if (!isLoading) onBookmarkToggle(mediaId, mediaType);
+  };
+
+  const handleMenuClick = e => {
+    e.stopPropagation();
+    onMenuClick(mediaId);
   };
 
   return (
-    <div className="w-[200px] bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden group">
-      {/* Poster + overlays */}
-      <div className="relative">
+    <div className={`
+        relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
+        ${className}
+      `}>
+      {/* Poster + Overlays */}
+      <div className="relative w-full flex-shrink-0 aspect-[2/3]">
         <img
           src={getPosterUrl(details.poster_path, 'w500')}
           alt={title}
-          className="w-full h-auto object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Bookmark */}
+        {/* Bookmark als echtes <button> */}
         <button
           type="button"
           onClick={handleBookmarkClick}
           className={`
-            absolute left-2 top-[3px] transform -translate-y-1 
-            w-[34px] h-[45px] z-10 
-            ${isLoading ? 'opacity-50' : 'cursor-pointer hover:scale-110'} 
+            absolute top-[-1px] left-3
+            w-[34px] h-[45px] z-10
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
             transition-transform ease-out
           `}
         >
-          <img
-            src={bookmarked ? Bookmarked : AddToBookmark}
-            alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
-            className="w-full h-full object-contain"
-          />
+          {isLoading
+            ? <div className="w-full h-full flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+              </div>
+            : <img
+                src={bookmarked ? Bookmarked : AddToBookmark}
+                alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
+                className="w-full h-full object-contain"
+              />
+          }
         </button>
 
-        {/* Score badge */}
-        <div className="
-          absolute top-2 right-2 
-          bg-black/80 rounded-xl px-2 py-1 
-          flex items-center gap-1
-        ">
-          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-          <span className="text-white font-medium text-[16px] font-sans">
+        {/* Score */}
+        <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
+          <Star className="w-4 h-4 text-yellow-400 fill-current"/>
+          <span className="text-white font-medium text-[16px]">
             {details.vote_average.toFixed(1)}
           </span>
         </div>
       </div>
 
-      {/* Text panel */}
-      <div className="bg-[#141414] px-4 py-3 flex items-center justify-between rounded-b-2xl">
+      {/* Text & Menu */}
+      <div className="flex-1 bg-[#141414] px-3 py-2 flex items-center justify-between rounded-b-2xl">
         <div>
-          <h3 className="text-white text-base font-poppins font-semibold leading-tight">
+          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight">
             {title}
           </h3>
-          <div className="flex items-center text-gray-400 text-sm font-sans space-x-1 mt-1">
-            <span>{year}</span><span>•</span>
+          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1">
+            {year && <span>{year}</span>}<span>•</span>
             <span>{ageRating}</span><span>•</span>
             <span>{runtimeStr}</span>
           </div>
@@ -106,23 +115,23 @@ export default function MovieCard({
         {onMenuClick && (
           <button
             type="button"
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              onMenuClick(mediaId);
-            }}
-            className="
-              p-1 
-              rounded-full 
-              bg-white text-gray-900 
-              hover:bg-gray-700/80 hover:text-white 
-              transition-colors
-            "
+            onClick={handleMenuClick}
+            className="p-1 rounded-full bg-white text-gray-900 hover:bg-gray-700/80 hover:text-white transition-colors"
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <MoreHorizontal className="w-5 h-5"/>
           </button>
         )}
       </div>
     </div>
   );
 }
+
+MovieCard.propTypes = {
+  mediaType:        PropTypes.string.isRequired,
+  mediaId:          PropTypes.number.isRequired,
+  bookmarked:       PropTypes.bool,
+  isLoading:        PropTypes.bool,
+  onBookmarkToggle: PropTypes.func,
+  onMenuClick:      PropTypes.func,
+  className:        PropTypes.string,
+};

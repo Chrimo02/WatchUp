@@ -16,8 +16,19 @@ const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 export default function SingleArtistPage() {
   const { id } = useParams();
   const { isAuthenticated, user, sessionId, login } = useAuth();
-  const { toggleWatchlist, isInWatchlist } = useMovies();
-  const { loading, error, person, credits, fetchPersonAndCredits, clearPerson } = usePerson();
+  const {
+    toggleWatchlist,
+    isInWatchlist,
+    getBatchAccountStates
+  } = useMovies();
+  const {
+    loading,
+    error,
+    person,
+    credits,
+    fetchPersonAndCredits,
+    clearPerson
+  } = usePerson();
 
   const [filter, setFilter] = useState('movies');
   const [sortOption, setSortOption] = useState('date_desc');
@@ -25,26 +36,55 @@ export default function SingleArtistPage() {
   const [bioOverflow, setBioOverflow] = useState(false);
   const bioRef = useRef(null);
 
+  // 1) lade Person & Credits
   useEffect(() => {
     fetchPersonAndCredits(id);
     return () => clearPerson();
   }, [id, fetchPersonAndCredits, clearPerson]);
 
+  // 2) beim Erhalt der Credits: batch-load der AccountStates
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !sessionId ||
+      !credits?.cast?.length
+    ) return;
+
+    const items = credits.cast.map(c => ({
+      id: c.id,
+      type: c.media_type
+    }));
+    getBatchAccountStates(items, sessionId);
+  }, [credits, isAuthenticated, sessionId, getBatchAccountStates]);
+
+  // 3) Bio Overflow prüfen
   useEffect(() => {
     const el = bioRef.current;
-    if (!el) return setBioOverflow(false);
-    const prev = el.style.maxHeight;
+    if (!el) {
+      setBioOverflow(false);
+      return;
+    }
+    const prevMax = el.style.maxHeight;
     el.style.maxHeight = '16rem';
     setBioOverflow(el.scrollHeight > el.clientHeight + 1);
-    el.style.maxHeight = prev;
+    el.style.maxHeight = prevMax;
   }, [person]);
 
   const handleBookmark = async (mid, type) => {
-    if (!isAuthenticated) { login(); return; }
-    await toggleWatchlist(user.id, sessionId, mid, type, isInWatchlist(mid, type));
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+    await toggleWatchlist(
+      user.id,
+      sessionId,
+      mid,
+      type,
+      isInWatchlist(mid, type)
+    );
   };
 
-  // Known for (top 10 nach popularity)
+  // Known For
   const knownForMovies = useMemo(() => {
     const seen = new Set();
     return (credits?.cast || [])
@@ -55,15 +95,15 @@ export default function SingleArtistPage() {
         seen.add(key);
         return true;
       })
-      .sort((a,b) => b.popularity - a.popularity)
-      .slice(0,10)
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 10)
       .map(item => ({
         id: item.id,
         title: item.title || item.name,
         poster: `${IMAGE_BASE}/w342${item.poster_path}`,
         score: item.vote_average.toFixed(1),
-        bookmarked: isInWatchlist(item.id,'movie'),
-        type:'movie'
+        bookmarked: isInWatchlist(item.id, 'movie'),
+        type: 'movie'
       }));
   }, [credits, isInWatchlist]);
 
@@ -77,19 +117,19 @@ export default function SingleArtistPage() {
         seen.add(key);
         return true;
       })
-      .sort((a,b) => b.popularity - a.popularity)
-      .slice(0,10)
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, 10)
       .map(item => ({
         id: item.id,
         title: item.name,
         poster: `${IMAGE_BASE}/w342${item.poster_path}`,
         score: item.vote_average.toFixed(1),
-        bookmarked: isInWatchlist(item.id,'tv'),
-        type:'tv'
+        bookmarked: isInWatchlist(item.id, 'tv'),
+        type: 'tv'
       }));
   }, [credits, isInWatchlist]);
 
-  // full credits dedupe
+  // Vollständige Credits deduplizieren
   const dedupe = arr => {
     const seen = new Set();
     return arr.filter(x => {
@@ -100,71 +140,93 @@ export default function SingleArtistPage() {
     });
   };
 
-  const moviesActors = useMemo(() => dedupe(
-    (credits?.cast||[])
-      .filter(c=>c.media_type==='movie')
-      .map(item=>({
-        id:item.id, type:'movie',
-        title:item.title,
-        poster: item.poster_path ? `${IMAGE_BASE}/w185${item.poster_path}` : '/placeholder-poster.jpg',
-        rating: item.vote_average.toFixed(1),
-        yearsValue: item.release_date?.slice(0,4) || '–',
-        characterValue: item.character || '–',
-        date: item.release_date?.slice(0,4) || '0',
-        popularity: item.popularity,
-        bookmarked: isInWatchlist(item.id,'movie')
-      }))
-  ), [credits, isInWatchlist]);
+  // Film- und Serien-Credits
+  const moviesActors = useMemo(
+    () =>
+      dedupe(
+        (credits?.cast || [])
+          .filter(c => c.media_type === 'movie')
+          .map(item => ({
+            id: item.id,
+            type: 'movie',
+            title: item.title,
+            poster: item.poster_path
+              ? `${IMAGE_BASE}/w185${item.poster_path}`
+              : '/placeholder-poster.jpg',
+            rating: item.vote_average.toFixed(1),
+            yearsValue: item.release_date?.slice(0, 4) || '–',
+            characterValue: item.character || '–',
+            date: item.release_date?.slice(0, 4) || '0',
+            popularity: item.popularity,
+            bookmarked: isInWatchlist(item.id, 'movie')
+          }))
+      ),
+    [credits, isInWatchlist]
+  );
 
-  const tvActors = useMemo(() => dedupe(
-    (credits?.cast||[])
-      .filter(c=>c.media_type==='tv')
-      .map(item=>({
-        id:item.id, type:'tv',
-        title:item.name,
-        poster: item.poster_path ? `${IMAGE_BASE}/w185${item.poster_path}` : '/placeholder-poster.jpg',
-        rating: item.vote_average.toFixed(1),
-        yearsValue: item.first_air_date?.slice(0,4) || '–',
-        characterValue: item.character || '–',
-        date: item.first_air_date?.slice(0,4) || '0',
-        popularity: item.popularity,
-        bookmarked: isInWatchlist(item.id,'tv')
-      }))
-  ), [credits, isInWatchlist]);
+  const tvActors = useMemo(
+    () =>
+      dedupe(
+        (credits?.cast || [])
+          .filter(c => c.media_type === 'tv')
+          .map(item => ({
+            id: item.id,
+            type: 'tv',
+            title: item.name,
+            poster: item.poster_path
+              ? `${IMAGE_BASE}/w185${item.poster_path}`
+              : '/placeholder-poster.jpg',
+            rating: item.vote_average.toFixed(1),
+            yearsValue: item.first_air_date?.slice(0, 4) || '–',
+            characterValue: item.character || '–',
+            date: item.first_air_date?.slice(0, 4) || '0',
+            popularity: item.popularity,
+            bookmarked: isInWatchlist(item.id, 'tv')
+          }))
+      ),
+    [credits, isInWatchlist]
+  );
 
-  const displayActors = filter==='movies'?moviesActors:tvActors;
+  const displayActors = filter === 'movies' ? moviesActors : tvActors;
 
   const sortedActors = useMemo(() => {
-    const [field,order] = sortOption.split('_');
-    return [...displayActors].sort((a,b) => {
-      let av = a[field], bv = b[field];
-      if(field==='name'){ av=a.title.toLowerCase(); bv=b.title.toLowerCase(); }
-      if(field==='rating'||field==='popularity'){
-        av = parseFloat(av)||0; bv=parseFloat(bv)||0;
+    const [field, order] = sortOption.split('_');
+    return [...displayActors].sort((a, b) => {
+      let av = a[field],
+        bv = b[field];
+      if (field === 'name') {
+        av = a.title.toLowerCase();
+        bv = b.title.toLowerCase();
       }
-      if(av< bv) return order==='asc'? -1:1;
-      if(av> bv) return order==='asc'?  1:-1;
+      if (field === 'rating' || field === 'popularity') {
+        av = parseFloat(av) || 0;
+        bv = parseFloat(bv) || 0;
+      }
+      if (av < bv) return order === 'asc' ? -1 : 1;
+      if (av > bv) return order === 'asc' ? 1 : -1;
       return 0;
     });
-  },[displayActors,sortOption]);
+  }, [displayActors, sortOption]);
 
-  if(loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="animate-spin h-16 w-16 border-t-4 border-red-500 rounded-full"/>
-    </div>
-  );
-  if(error||!person) return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <p>{error||'Artist not found.'}</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="animate-spin h-16 w-16 border-t-4 border-red-500 rounded-full" />
+      </div>
+    );
+  if (error || !person)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <p>{error || 'Artist not found.'}</p>
+      </div>
+    );
 
   const personalInfo = {
     'Known For': person.known_for_department,
-    'Known Credits': credits?.cast?.length||0,
-    Gender: person.gender===1?'Female':'Male',
+    'Known Credits': credits?.cast?.length || 0,
+    Gender: person.gender === 1 ? 'Female' : 'Male',
     Birthday: person.birthday,
-    'Place of Birth': person.place_of_birth,
+    'Place of Birth': person.place_of_birth
   };
 
   return (
@@ -179,30 +241,36 @@ export default function SingleArtistPage() {
                 : profilePlaceholder
             }
           />
-          <PersonalInfoCard info={personalInfo}/>
+          <PersonalInfoCard info={personalInfo} />
         </div>
+
         <div className="lg:col-span-2 space-y-6">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold">{person.name}</h1>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold">
+            {person.name}
+          </h1>
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-2">Biography</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-2">
+              Biography
+            </h2>
             <div
               ref={bioRef}
               className={`text-sm md:text-base lg:text-lg leading-relaxed overflow-hidden transition-all ${
                 showFullBio ? 'max-h-full' : 'max-h-64'
               }`}
-              style={showFullBio ? {maxHeight:'none'}:{maxHeight:'16rem'}}
+              style={showFullBio ? { maxHeight: 'none' } : { maxHeight: '16rem' }}
             >
-              {person.biography || "Sorry, no bio available."}
+              {person.biography || 'Sorry, no bio available.'}
             </div>
-            {(bioOverflow||showFullBio) && (
+            {(bioOverflow || showFullBio) && (
               <button
-                onClick={()=>setShowFullBio(v=>!v)}
+                onClick={() => setShowFullBio((v) => !v)}
                 className="mt-2 text-blue-400 hover:underline"
               >
-                {showFullBio?'Show less':'Read more'}
+                {showFullBio ? 'Show less' : 'Read more'}
               </button>
             )}
           </div>
+
           <MovieSlider
             title="Known For"
             movieItems={knownForMovies}
@@ -218,11 +286,11 @@ export default function SingleArtistPage() {
       <div className="px-4 sm:px-6 lg:px-8 pb-12">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <FilterTabs selected={filter} onSelect={setFilter}/>
+            <FilterTabs selected={filter} onSelect={setFilter} />
             <div className="relative inline-block">
               <select
                 value={sortOption}
-                onChange={e=>setSortOption(e.target.value)}
+                onChange={(e) => setSortOption(e.target.value)}
                 className="appearance-none bg-[#141414] border border-gray-700 text-white py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
               >
                 <option value="date_desc">Date ↓</option>
@@ -235,14 +303,24 @@ export default function SingleArtistPage() {
                 <option value="popularity_asc">Beliebt ↑</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"/>
+                <svg
+                  className="w-4 h-4 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+                  />
                 </svg>
               </div>
             </div>
           </div>
-          <CreditsListGrid actors={sortedActors} onBookmarkToggle={handleBookmark}/>
+
+          <CreditsListGrid actors={sortedActors} onBookmarkToggle={handleBookmark} />
         </div>
       </div>
     </div>
