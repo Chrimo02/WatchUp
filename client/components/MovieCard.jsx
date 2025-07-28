@@ -1,11 +1,13 @@
 // src/components/MovieCard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useMovies } from '../contexts/MovieContext';
 import { getPosterUrl } from '../utils/api';
 import { Star, MoreHorizontal } from 'lucide-react';
 import AddToBookmark from '../assets/AddToBookmark.svg?url';
-import Bookmarked      from '../assets/Bookmarked.svg?url';
+import Bookmarked    from '../assets/Bookmarked.svg?url';
+import MovieCardMenu from './MovieCardMenu';
+import { useOnClickOutside } from '../hooks/useOnClickOutside';
 
 export default function MovieCard({
   mediaType,
@@ -14,10 +16,17 @@ export default function MovieCard({
   isLoading  = false,
   onBookmarkToggle,
   onMenuClick,
-  className = '',
+  onRate,
+  onAddToList,
+  onFavorite,
 }) {
   const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
   const [details, setDetails] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuWrapperRef = useRef(null);
+
+  // close menu on outside click
+  useOnClickOutside(menuWrapperRef, () => setMenuOpen(false));
 
   useEffect(() => {
     (async () => {
@@ -30,7 +39,7 @@ export default function MovieCard({
         console.error('Error loading details', err);
       }
     })();
-  }, [mediaType, mediaId, fetchMovieDetails, fetchTVShowDetails]);
+  }, [mediaType, mediaId]);
 
   if (!details) return null;
 
@@ -46,92 +55,79 @@ export default function MovieCard({
   const handleBookmarkClick = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isLoading) onBookmarkToggle(mediaId, mediaType);
-  };
-
-  const handleMenuClick = e => {
-    e.stopPropagation();
-    onMenuClick(mediaId);
+    if (!isLoading && onBookmarkToggle) {
+      onBookmarkToggle(mediaId, mediaType);
+    }
   };
 
   return (
-    <div className={`
-        relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
-        ${className}
-      `}>
-      {/* Poster + Overlays */}
-      <div className="relative w-full flex-shrink-0 aspect-[2/3]">
+    <div className="w-[200px] bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden relative">
+      {/* Poster + overlays */}
+      <div className="relative">
         <img
           src={getPosterUrl(details.poster_path, 'w500')}
           alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="w-full h-auto object-cover"
         />
 
-        {/* Bookmark als echtes <button> */}
-        <button
-          type="button"
+        {/* Bookmark */}
+        <div
           onClick={handleBookmarkClick}
           className={`
-            absolute top-[-1px] left-3
-            w-[34px] h-[45px] z-10
-            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
+            absolute left-2 top-[3px] transform -translate-y-1 
+            w-[34px] h-[45px] z-10 
+            ${isLoading ? 'opacity-50' : 'cursor-pointer hover:scale-110'} 
             transition-transform ease-out
           `}
         >
-          {isLoading
-            ? <div className="w-full h-full flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-              </div>
-            : <img
-                src={bookmarked ? Bookmarked : AddToBookmark}
-                alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
-                className="w-full h-full object-contain"
-              />
-          }
-        </button>
+          <img
+            src={bookmarked ? Bookmarked : AddToBookmark}
+            alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
+            className="w-full h-full object-contain"
+          />
+        </div>
 
-        {/* Score */}
-        <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-current"/>
-          <span className="text-white font-medium text-[16px]">
+        {/* Rating Badge */}
+        <div className="
+          absolute top-2 right-2 
+          bg-black/80 rounded-xl px-2 py-1 
+          flex items-center gap-1
+        ">
+          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+          <span className="text-white font-medium text-[16px] font-sans">
             {details.vote_average.toFixed(1)}
           </span>
         </div>
       </div>
 
-      {/* Text & Menu */}
-      <div className="flex-1 bg-[#141414] px-3 py-2 flex items-center justify-between rounded-b-2xl">
+      {/* Text Panel */}
+      <div className="bg-[#141414] px-4 py-3 flex items-center justify-between rounded-b-2xl">
         <div>
-          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight">
+          <h3 className="text-white text-base font-poppins font-semibold">
             {title}
           </h3>
-          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1">
-            {year && <span>{year}</span>}<span>•</span>
+          <div className="flex items-center text-gray-400 text-sm font-sans space-x-1 mt-1">
+            <span>{year}</span><span>•</span>
             <span>{ageRating}</span><span>•</span>
             <span>{runtimeStr}</span>
           </div>
         </div>
 
+        {/* More button */}
         {onMenuClick && (
           <button
-            type="button"
-            onClick={handleMenuClick}
-            className="p-1 rounded-full bg-white text-gray-900 hover:bg-gray-700/80 hover:text-white transition-colors"
+            onClick={() => onMenuClick(mediaId)}
+            className="
+              p-1 rounded-full
+              bg-white text-gray-900
+              hover:bg-gray-700/80 hover:text-white
+              transition-colors
+            "
           >
-            <MoreHorizontal className="w-5 h-5"/>
+            <MoreHorizontal className="w-5 h-5" />
           </button>
         )}
       </div>
     </div>
   );
 }
-
-MovieCard.propTypes = {
-  mediaType:        PropTypes.string.isRequired,
-  mediaId:          PropTypes.number.isRequired,
-  bookmarked:       PropTypes.bool,
-  isLoading:        PropTypes.bool,
-  onBookmarkToggle: PropTypes.func,
-  onMenuClick:      PropTypes.func,
-  className:        PropTypes.string,
-};
