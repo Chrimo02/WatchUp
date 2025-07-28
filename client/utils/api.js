@@ -149,6 +149,40 @@ export const getRatedTVShows = (accountId, sessionId, page = 1) =>
     params: { session_id: sessionId, page } 
   });
 
+// List management functions
+export const createList = (sessionId, name, description = "") =>
+  api.post(
+    "/list",
+    {
+      name,
+      description,
+      language: "en",
+    },
+    { params: { session_id: sessionId } },
+  )
+
+export const getListDetails = (listId, sessionId) => api.get(`/list/${listId}`, { params: { session_id: sessionId } })
+
+export const addMovieToList = (listId, sessionId, movieId) =>
+  api.post(
+    `/list/${listId}/add_item`,
+    {
+      media_id: movieId,
+    },
+    { params: { session_id: sessionId } },
+  )
+
+export const removeMovieFromList = (listId, sessionId, movieId) =>
+  api.post(
+    `/list/${listId}/remove_item`,
+    {
+      media_id: movieId,
+    },
+    { params: { session_id: sessionId } },
+  )
+
+export const deleteList = (listId, sessionId) => api.delete(`/list/${listId}`, { params: { session_id: sessionId } })
+
 export const markAsFavorite = (accountId, sessionId, mediaId, mediaType, favorite) => 
   api.post(`/account/${accountId}/favorite`, { 
     media_type: mediaType,

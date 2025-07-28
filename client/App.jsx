@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import HomePage from "./pages/HomePage.jsx";
+import MyListsPage from "./pages/MyListsPage.jsx"
 import NotFound from "./pages/NotFound.jsx";
 import MovieDetailsPage from "./pages/MovieDetailsPage.jsx";
 import SeriesDetailsPage from "./pages/SeriesDetailsPage.jsx";
@@ -28,6 +29,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />} >
             <Route index element={<HomePage />} />
+            <Route path="/my-lists" element={<MyListsPage />} />
             <Route path="search" element={<SearchResultsPage />} />
             <Route path="*" element={<NotFound />} />
             <Route path="movie/:id" element={<MovieDetailsPage />} />
