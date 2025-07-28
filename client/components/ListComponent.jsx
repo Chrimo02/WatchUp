@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useMovies } from '../contexts/MovieContext';
 import { Star as StarOutline, Plus, Heart } from 'lucide-react';
+import AddToList from '../assets/AddToList.svg';
 import { getPosterUrl } from '../utils/api';
 import AddToBookmark from '../assets/AddToBookmark.svg';
 import Bookmarked from '../assets/Bookmarked.svg';
@@ -107,7 +108,7 @@ export default function ListComponent({
             {/* Add to List Button */}
             {onAddToList && (
               <button type="button" onClick={() => onAddToList(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5 " />
                 <span>Add to list</span>
               </button>
             )}

@@ -125,6 +125,7 @@ const SeriesDetailsPage = () => {
         setCredits(cred);
         setFormattedCast(
           (cred.cast || []).map(m => ({
+            id: m.id,
             name: m.name,
             role: m.character,
             img: m.profile_path
