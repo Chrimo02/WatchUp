@@ -1,3 +1,4 @@
+// src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
@@ -5,78 +6,111 @@ import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useAuth } from '../contexts/AuthContext';
 import ListComponent from '../components/ListComponent';
 import PersonListItem from '../components/PersonListItem';
+import chairsBg from '../assets/chairs.jpg';
 import {
-  getMovieWatchProviders,
-  getTVShowWatchProviders,
   rateMovie,
   markAsFavorite,
   addToWatchlist,
+  getMovieWatchProviders,
+  getTVShowWatchProviders,
 } from '../utils/api';
-import chairsBg from '../assets/chairs.jpg';
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
 
-  // filter: 'all' | 'movie' | 'tv' | 'person'
   const [filter, setFilter] = useState('all');
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const { searchMultiByQuery, isInWatchlist } = useMovies();
+  const { 
+    searchMultiByQuery,
+    searchMoviesByQuery,
+    searchTVShowsByQuery,
+    isInWatchlist,
+  } = useMovies();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { user, sessionId } = useAuth();
 
+  const [movieTotal, setMovieTotal] = useState(0);
+  const [tvTotal, setTvTotal] = useState(0);
   const [providersMap, setProvidersMap] = useState({});
 
-  // Reset page to 1 when query changes
+  // reset page on new query
   useEffect(() => {
     setPage(1);
   }, [query]);
 
-  // Fetch search results on [query, page] changes
+  // fetch mixed search results & sort by popularity desc
   useEffect(() => {
     let cancelled = false;
-
     if (!query) {
       setItems([]);
       setTotal(0);
       setLoading(false);
       return;
     }
-
-    const doSearch = async () => {
+    (async () => {
       setLoading(true);
       try {
         const data = await searchMultiByQuery(query, page);
         if (cancelled) return;
-        setItems(data.results || []);
+        const results = (data.results || [])
+          .slice() // copy
+          .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        setItems(results);
         setTotal(data.total_results || 0);
       } catch (err) {
-        if (cancelled) return;
-        console.error('Search failed', err);
-        setItems([]);
-        setTotal(0);
+        if (!cancelled) {
+          console.error('Search failed', err);
+          setItems([]);
+          setTotal(0);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
-
-    doSearch();
-    return () => {
-      cancelled = true;
-    };
+    })();
+    return () => { cancelled = true; };
   }, [query, page, searchMultiByQuery]);
 
-  // Load streaming providers for movies and TV
+  // fetch separate totals for movies & tv
   useEffect(() => {
     let cancelled = false;
-    const loadProviders = async () => {
-      const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
-      const entries = await Promise.all(
-        relevant.map(async i => {
+    if (!query) {
+      setMovieTotal(0);
+      setTvTotal(0);
+      return;
+    }
+    (async () => {
+      try {
+        const [m, tv] = await Promise.all([
+          searchMoviesByQuery(query, 1),
+          searchTVShowsByQuery(query, 1),
+        ]);
+        if (!cancelled) {
+          setMovieTotal(m.total_results || 0);
+          setTvTotal(tv.total_results || 0);
+        }
+      } catch (err) {
+        if (!cancelled) console.error('Count-fetch failed', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [query, searchMoviesByQuery, searchTVShowsByQuery]);
+
+  // load streaming providers for movies & tv
+  useEffect(() => {
+    let cancelled = false;
+    if (!items.length) {
+      setProvidersMap({});
+      return;
+    }
+    (async () => {
+      try {
+        const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
+        const entries = await Promise.all(relevant.map(async i => {
           if (i.media_type === 'movie') {
             const { data } = await getMovieWatchProviders(i.id);
             return [i.id, data.results];
@@ -84,27 +118,27 @@ export default function SearchResultsPage() {
             const { data } = await getTVShowWatchProviders(i.id);
             return [i.id, data.results];
           }
-        })
-      );
-      if (!cancelled) setProvidersMap(Object.fromEntries(entries));
-    };
-    if (items.length) loadProviders();
+        }));
+        if (!cancelled) setProvidersMap(Object.fromEntries(entries));
+      } catch (err) {
+        if (!cancelled) console.error('Providers load failed', err);
+      }
+    })();
     return () => { cancelled = true; };
   }, [items]);
 
-  // Local filter and counts
+  // filter + counts
   const filtered = items.filter(x => {
-    if (filter === 'all') return ['movie', 'tv', 'person'].includes(x.media_type);
+    if (filter === 'all') return ['movie','tv','person'].includes(x.media_type);
     return x.media_type === filter;
   });
   const counts = {
-    all: items.filter(i => ['movie', 'tv', 'person'].includes(i.media_type)).length,
-    movie: items.filter(i => i.media_type === 'movie').length,
-    tv: items.filter(i => i.media_type === 'tv').length,
-    person: items.filter(i => i.media_type === 'person').length,
+    all: total,
+    movie: movieTotal,
+    tv: tvTotal,
+    person: Math.max(total - movieTotal - tvTotal, 0),
   };
 
-  // Pagination range
   const pageSize = 20;
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, total);
@@ -117,33 +151,31 @@ export default function SearchResultsPage() {
         style={{ backgroundImage: `url(${chairsBg})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414] to-transparent" />
-        {/* Display range and total at bottom-left */}
         <div className="absolute bottom-4 left-8 text-sm text-gray-300">
           {start.toLocaleString()} – {end.toLocaleString()} of {total.toLocaleString()} Results
         </div>
         <h1 className="relative text-4xl font-extrabold">
           Results for “<span className="italic">{query}</span>”
         </h1>
-        {/* Filter buttons at bottom-right */}
         <div className="absolute bottom-4 right-8 flex gap-2">
-          {['all','movie','tv','person'].map(type => {
+          {(['all','movie','tv','person']).map(type => {
             const label =
-              type === 'all' ? 'All'
-              : type === 'movie' ? 'Movies'
-              : type === 'tv'    ? 'Series'
-              :                   'People';
+              type === 'all'   ? 'All'
+            : type === 'movie' ? 'Movies'
+            : type === 'tv'    ? 'Series'
+            :                   'People';
             return (
               <button
                 key={type}
                 onClick={() => setFilter(type)}
-                className={
-                  `px-4 py-2 rounded-full font-medium 
+                className={`
+                  px-4 py-2 rounded-full font-medium
                   ${filter === type
                     ? 'bg-red-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`
-                }
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}
+                `}
               >
-                {label} ({counts[type]})
+                {label} ({counts[type].toLocaleString()})
               </button>
             );
           })}
@@ -162,9 +194,9 @@ export default function SearchResultsPage() {
               if (item.media_type === 'movie' || item.media_type === 'tv') {
                 const provs = providersMap[item.id] || {};
                 const streaming = [
-                  ...(provs.flatrate || []),
-                  ...(provs.rent    || []),
-                  ...(provs.buy     || []),
+                  ...(provs.flatrate||[]),
+                  ...(provs.rent   ||[]),
+                  ...(provs.buy    ||[]),
                 ].map(p => ({
                   icon: p.logo_path
                     ? <img
@@ -176,7 +208,6 @@ export default function SearchResultsPage() {
                     : null,
                   name: p.provider_name,
                 }));
-
                 return (
                   <ListComponent
                     key={item.id}
@@ -196,26 +227,25 @@ export default function SearchResultsPage() {
                   />
                 );
               }
-
               return <PersonListItem key={item.id} person={item} />;
             })}
           </div>
         )}
 
-        {/* Pagination */}
+        {/* pagination */}
         {total > 0 && (
           <div className="flex justify-center items-center gap-4 pt-4">
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => Math.max(p - 1, 1))}
-              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(p-1,1))}
+              disabled={page===1}
             >
               « Prev
             </button>
             <span>Page {page}</span>
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage(p => p+1)}
               disabled={page * pageSize >= total}
             >
               Next »
