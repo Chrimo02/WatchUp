@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import ListComponent from '../components/ListComponent';
 import PersonListItem from '../components/PersonListItem';
 import chairsBg from '../assets/chairs.jpg';
@@ -33,6 +34,7 @@ export default function SearchResultsPage() {
   } = useMovies();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { user, sessionId } = useAuth();
+  const { region } = useLanguage();
 
   const [movieTotal, setMovieTotal] = useState(0);
   const [tvTotal, setTvTotal] = useState(0);
@@ -58,7 +60,7 @@ export default function SearchResultsPage() {
         const data = await searchMultiByQuery(query, page);
         if (cancelled) return;
         const results = (data.results || [])
-          .slice() // copy
+          .slice()
           .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
         setItems(results);
         setTotal(data.total_results || 0);
@@ -100,7 +102,7 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMoviesByQuery, searchTVShowsByQuery]);
 
-  // load streaming providers for movies & tv
+  // load streaming providers for movies & tv in current page
   useEffect(() => {
     let cancelled = false;
     if (!items.length) {
@@ -110,22 +112,25 @@ export default function SearchResultsPage() {
     (async () => {
       try {
         const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
-        const entries = await Promise.all(relevant.map(async i => {
-          if (i.media_type === 'movie') {
-            const { data } = await getMovieWatchProviders(i.id);
-            return [i.id, data.results];
-          } else {
-            const { data } = await getTVShowWatchProviders(i.id);
-            return [i.id, data.results];
-          }
-        }));
+        const entries = await Promise.all(
+          relevant.map(async i => {
+            if (i.media_type === 'movie') {
+              const { data } = await getMovieWatchProviders(i.id);
+              // pick only your region
+              return [i.id, data.results[region] || {}];
+            } else {
+              const { data } = await getTVShowWatchProviders(i.id);
+              return [i.id, data.results[region] || {}];
+            }
+          })
+        );
         if (!cancelled) setProvidersMap(Object.fromEntries(entries));
       } catch (err) {
         if (!cancelled) console.error('Providers load failed', err);
       }
     })();
     return () => { cancelled = true; };
-  }, [items]);
+  }, [items, region]);
 
   // filter + counts
   const filtered = items.filter(x => {
