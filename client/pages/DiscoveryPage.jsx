@@ -21,9 +21,13 @@ import GridIcon from "../components/icons/GridIcon";
 import AdvancedSearch from "../components/AdvancedSearch";
 import chairsBg from "../assets/chairs.jpg";
 import { SortSelect } from "@/components/ui/SortSelect";
-
+import { useLocation } from 'react-router-dom';
 
 export default function DiscoveryPage() {
+  const location = useLocation();
+  const preset = location.state?.preset || null;
+  console.log("DISCOVERY PRESET:", preset);
+
   const {
     loading: globalLoading,
     error,
@@ -39,14 +43,19 @@ export default function DiscoveryPage() {
   const [totalResults, setTotalResults] = useState(0);
   const [providersMap, setProvidersMap] = useState({});
   const [filters, setFilters] = useState({});
-  const [sortOption, setSortOption] = useState("date_desc");
-  const [viewMode, setViewMode] = useState("grid");
+  const [sortOption, setSortOption] = useState(() => {
+  if (preset === 'trending') return 'trending';
+  if (preset === 'popular') return 'popularity_desc';
+  if (preset === 'topRated') return 'rating_desc';
+  return 'date_desc';
+});
   const [page, setPage] = useState(1);
   const [inputPage, setInputPage] = useState(1);
   const [menuOpenFor, setMenuOpenFor] = useState(null);
 
   const [rowHeight, setRowHeight] = useState(null);
   const gridRef = useRef(null);
+const [viewMode, setViewMode] = useState("grid");
 
   const pageSize = 20;
   const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
