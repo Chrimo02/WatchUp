@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import AddToBookmark from "../assets/AddToBookmark.svg";
 import Bookmarked     from "../assets/Bookmarked.svg";
 import Star           from "../assets/Star.svg";
-import DEFAULT_POSTER from '../assets/placeholder-poster.png';
+import DEFAULT_POSTER from '../assets/no-image-found.png';
 
 export default function SimpleMovieCard({
   poster,

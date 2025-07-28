@@ -1,8 +1,7 @@
 // src/components/ListComponent.jsx
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { Link } from 'react-router-dom'                // ← Added
-
+import { Link } from 'react-router-dom'                
 import { useMovies }     from '../contexts/MovieContext'
 import { useLanguage }   from '../contexts/LanguageContext'     
 
@@ -19,7 +18,7 @@ import {
   Plus,
   Heart,
 } from 'lucide-react'
-
+import NoImageFound from '../assets/no-image-found.png'
 import AddToList      from '../assets/AddToList.svg'
 import AddToBookmark  from '../assets/AddToBookmark.svg'
 import Bookmarked     from '../assets/Bookmarked.svg'
@@ -114,7 +113,7 @@ export default function ListComponent({
         <div className="flex-shrink-0 mr-6 self-stretch rounded-2xl overflow-hidden">
           <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
             <img
-              src={getPosterUrl(details.poster_path, 'w500')}
+              src={details.poster_path ? getPosterUrl(details.poster_path, 'w500') : NoImageFound}
               alt={title}
               className="w-[150px] h-full object-cover"
             />
