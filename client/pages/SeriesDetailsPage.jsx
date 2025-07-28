@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
+import PLACEHOLDER from '../assets/placeholder-profile.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
@@ -130,7 +131,7 @@ const SeriesDetailsPage = () => {
             role: m.character,
             img: m.profile_path
               ? `${posterSizes.medium}${m.profile_path}`
-              : 'https://via.placeholder.com/150x225?text=No+Image'
+              : PLACEHOLDER
           }))
         );
 
