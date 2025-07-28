@@ -133,7 +133,7 @@ function AdvancedSearch() {
 
     return (
 
-                <div className="w-full bg-movie-bg rounded-[50px] border border-movie-card">
+                <div className="w-full bg-movie-bg rounded-[50px] border-2 border-movie-card border-red-600 ">
                     <div className="p-[28px]">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[65px]">
                             {/* Left Column */}
