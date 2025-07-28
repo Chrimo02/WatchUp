@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
+import PLACEHOLDER from '../assets/placeholder-poster.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useMediaTransforms } from '../hooks/useMediaTransforms';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
@@ -138,7 +139,7 @@ const MovieDetailsPage = () => {
     role: member.character,
     img: member.profile_path
       ? `${posterSizes.medium}${member.profile_path}`
-      : 'https://via.placeholder.com/150x225?text=No+Image'
+      : {PLACEHOLDER}
   })) || []
 
 
