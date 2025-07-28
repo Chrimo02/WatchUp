@@ -317,28 +317,6 @@ function AdvancedSearch() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Search Button */}
-                        <div className="flex justify-center mt-[40px]">
-                            <Button
-                                className="bg-movie-accent hover:bg-movie-accent/90 text-white px-[40px] py-[12px] rounded-[25px] text-[16px] font-medium flex items-center gap-[8px]"
-                                onClick={() => {
-                                    console.log("Search filters:", {
-                                        selectedType,
-                                        watchlistFilter,
-                                        ratingsFilter,
-                                        scoreRange,
-                                        runtimeRange,
-                                        fromYear,
-                                        toYear,
-                                        dropdowns,
-                                    });
-                                }}
-                            >
-                                <Search className="w-5 h-5" />
-                                Search
-                            </Button>
-                        </div>
                     </div>
                 </div>
        

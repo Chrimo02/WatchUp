@@ -20,6 +20,8 @@ import ListIcon from "../components/icons/ListIcon";
 import GridIcon from "../components/icons/GridIcon";
 import AdvancedSearch from "../components/AdvancedSearch";
 import chairsBg from "../assets/chairs.jpg";
+import { SortSelect } from "@/components/ui/SortSelect";
+
 
 export default function DiscoveryPage() {
   const {
@@ -195,49 +197,33 @@ export default function DiscoveryPage() {
               <span>Filter</span>
               <ChevronDown className="w-4 h-4 text-white" />
             </Popover.Button>
-            <Popover.Panel className="absolute left-[-200px] w-[600px] bg-[#141414] rounded-[50px] shadow-lg z-20">
+            <Popover.Panel className="absolute left-[-240px] w-[600px] bg-[#141414] rounded-[50px] shadow-lg z-20">
               <AdvancedSearch onSearch={setFilters} />
             </Popover.Panel>
           </Popover>
 
           {/* SORT */}
           <div className="relative">
-            <select
-              className="appearance-none bg-gray-800 border border-gray-700 text-white py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+            <SortSelect
               value={sortOption}
-              onChange={(e) => {
-                setSortOption(e.target.value);
+              onChange={(val) => {
+                setSortOption(val);
                 setPage(1);
               }}
-            >
-              <option value="date_desc">Date ↓</option>
-              <option value="date_asc">Date ↑</option>
-              <option value="name_asc">Name A→Z</option>
-              <option value="name_desc">Name Z→A</option>
-              <option value="rating_desc">Rating ↓</option>
-              <option value="rating_asc">Rating ↑</option>
-              <option value="popularity_desc">Popular ↓</option>
-              <option value="popularity_asc">Popular ↑</option>
-              <option value="trending">Trending</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            </div>
+            />
           </div>
 
           {/* VIEW MODE */}
           <button
-            className={`p-2 rounded ${
-              viewMode === "list" ? "bg-white text-black" : "bg-gray-800"
-            }`}
+            className={`p-2 rounded ${viewMode === "list" ? "bg-white text-black" : "bg-gray-800"
+              }`}
             onClick={() => setViewMode("list")}
           >
             <ListIcon className="w-6 h-6" />
           </button>
           <button
-            className={`p-2 rounded ${
-              viewMode === "grid" ? "bg-white text-black" : "bg-gray-800"
-            }`}
+            className={`p-2 rounded ${viewMode === "grid" ? "bg-white text-black" : "bg-gray-800"
+              }`}
             onClick={() => setViewMode("grid")}
           >
             <GridIcon className="w-6 h-6" />
