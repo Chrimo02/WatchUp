@@ -65,7 +65,7 @@ export default function Navbar() {
   /* ──────────────── watchlist button behaviour ──────────────────────── */
   const handleWatchlistClick = () => {
     if (isAuthenticated) {
-      navigate('/lists/watchlist')
+      navigate('/my-lists/watchlist')
     } else {
       showNotification(
         'Please sign in with your TMDB account to view your watchlist.',
@@ -204,7 +204,7 @@ export default function Navbar() {
                 <ul className="mt-1">
                   <li>
                     <Link
-                      to="/lists"
+                      to="/my-lists"
                       onClick={() => setMenuOpen(false)}
                       className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg"
                     >

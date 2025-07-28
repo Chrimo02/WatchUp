@@ -133,6 +133,7 @@ const MovieDetailsPage = () => {
 
   const formattedCast = credits?.cast
   .map(member => ({
+    id: member.id,
     name: member.name,
     role: member.character,
     img: member.profile_path
