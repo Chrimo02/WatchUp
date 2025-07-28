@@ -1,13 +1,13 @@
 // src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useMovies } from '../contexts/MovieContext';
-import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
-import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
-import ListComponent from '../components/ListComponent';
-import PersonListItem from '../components/PersonListItem';
-import chairsBg from '../assets/chairs.jpg';
+import { useSearchParams }    from 'react-router-dom';
+import { useMovies }          from '../contexts/MovieContext';
+import { useBookmarkToggle }  from '../hooks/useBookmarkToggle';
+import { useAuth }            from '../contexts/AuthContext';
+import { useLanguage }        from '../contexts/LanguageContext';
+import ListComponent          from '../components/ListComponent';
+import PersonListItem         from '../components/PersonListItem';
+import chairsBg               from '../assets/chairs.jpg';
 import {
   rateMovie,
   markAsFavorite,
@@ -18,135 +18,142 @@ import {
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get('q')?.trim() || '';
+  const query          = searchParams.get('q')?.trim() || '';
 
-  const [filter, setFilter] = useState('all');
-  const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-
-  const { 
-    searchMultiByQuery,
+  const { region } = useLanguage();
+  const {
     searchMoviesByQuery,
     searchTVShowsByQuery,
+    searchPeopleByQuery,
+    searchMultiByQuery,
     isInWatchlist,
   } = useMovies();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { user, sessionId } = useAuth();
-  const { region } = useLanguage();
 
-  const [movieTotal, setMovieTotal] = useState(0);
-  const [tvTotal, setTvTotal] = useState(0);
-  const [providersMap, setProvidersMap] = useState({});
+  const [filter, setFilter]       = useState('all');
+  const [items, setItems]         = useState([]);
+  const [total, setTotal]         = useState(0);
+  const [movieTotal, setMovieTotal]   = useState(0);
+  const [tvTotal, setTvTotal]         = useState(0);
+  const [personTotal, setPersonTotal] = useState(0);
+  const [page, setPage]           = useState(1);
+  const [loading, setLoading]     = useState(false);
+  const [watchProvidersMap, setWatchProvidersMap] = useState({});
 
-  // reset page on new query
-  useEffect(() => {
-    setPage(1);
-  }, [query]);
+  // Reset page on new query or filter
+  useEffect(() => { setPage(1); }, [query, filter]);
 
-  // fetch mixed search results & sort by popularity desc
+  // Main search
   useEffect(() => {
     let cancelled = false;
     if (!query) {
-      setItems([]);
-      setTotal(0);
-      setLoading(false);
-      return;
+      setItems([]); setTotal(0); setLoading(false);
+      return () => { cancelled = true; };
     }
     (async () => {
       setLoading(true);
       try {
-        const data = await searchMultiByQuery(query, page);
+        let data;
+        if (filter === 'movie') {
+          data = await searchMoviesByQuery(query, page);
+          data.results = data.results.map(i => ({ ...i, media_type: 'movie' }));
+        } else if (filter === 'tv') {
+          data = await searchTVShowsByQuery(query, page);
+          data.results = data.results.map(i => ({ ...i, media_type: 'tv' }));
+        } else if (filter === 'person') {
+          data = await searchPeopleByQuery(query, page);
+          data.results = data.results.map(i => ({ ...i, media_type: 'person' }));
+        } else {
+          data = await searchMultiByQuery(query, page);
+          // bereits sortiert im Context
+        }
         if (cancelled) return;
-        const results = (data.results || [])
-          .slice()
-          .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-        setItems(results);
+        setItems(data.results || []);
         setTotal(data.total_results || 0);
       } catch (err) {
         if (!cancelled) {
           console.error('Search failed', err);
-          setItems([]);
-          setTotal(0);
+          setItems([]); setTotal(0);
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [query, page, searchMultiByQuery]);
+  }, [
+    query, filter, page,
+    searchMoviesByQuery,
+    searchTVShowsByQuery,
+    searchPeopleByQuery,
+    searchMultiByQuery,
+  ]);
 
-  // fetch separate totals for movies & tv
+  // Counts for buttons
   useEffect(() => {
     let cancelled = false;
     if (!query) {
-      setMovieTotal(0);
-      setTvTotal(0);
-      return;
+      setMovieTotal(0); setTvTotal(0); setPersonTotal(0);
+      return () => { cancelled = true; };
     }
     (async () => {
       try {
-        const [m, tv] = await Promise.all([
+        const [m, tv, p] = await Promise.all([
           searchMoviesByQuery(query, 1),
           searchTVShowsByQuery(query, 1),
+          searchPeopleByQuery(query, 1),
         ]);
-        if (!cancelled) {
-          setMovieTotal(m.total_results || 0);
-          setTvTotal(tv.total_results || 0);
-        }
+        if (cancelled) return;
+        setMovieTotal(m.total_results || 0);
+        setTvTotal(tv.total_results || 0);
+        setPersonTotal(p.total_results || 0);
       } catch (err) {
         if (!cancelled) console.error('Count-fetch failed', err);
       }
     })();
     return () => { cancelled = true; };
-  }, [query, searchMoviesByQuery, searchTVShowsByQuery]);
+  }, [query, searchMoviesByQuery, searchTVShowsByQuery, searchPeopleByQuery]);
 
-  // load streaming providers for movies & tv in current page
+  // Watch providers
   useEffect(() => {
     let cancelled = false;
-    if (!items.length) {
-      setProvidersMap({});
-      return;
+    const relevant = items.filter(i => ['movie','tv'].includes(i.media_type));
+    if (relevant.length === 0) {
+      setWatchProvidersMap({});
+      return () => { cancelled = true; };
     }
     (async () => {
-      try {
-        const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
-        const entries = await Promise.all(
-          relevant.map(async i => {
-            if (i.media_type === 'movie') {
-              const { data } = await getMovieWatchProviders(i.id);
-              // pick only your region
-              return [i.id, data.results[region] || {}];
-            } else {
-              const { data } = await getTVShowWatchProviders(i.id);
-              return [i.id, data.results[region] || {}];
-            }
-          })
-        );
-        if (!cancelled) setProvidersMap(Object.fromEntries(entries));
-      } catch (err) {
-        if (!cancelled) console.error('Providers load failed', err);
+      const map = {};
+      for (const item of relevant) {
+        try {
+          const { data } = item.media_type === 'movie'
+            ? await getMovieWatchProviders(item.id)
+            : await getTVShowWatchProviders(item.id);
+          const country = data.results[region] || {};
+          map[item.id] = {
+            stream: country.flatrate || [],
+            rent:   country.rent     || [],
+            buy:    country.buy      || []
+          };
+        } catch {
+          map[item.id] = { stream: [], rent: [], buy: [] };
+        }
       }
+      if (!cancelled) setWatchProvidersMap(map);
     })();
     return () => { cancelled = true; };
   }, [items, region]);
 
-  // filter + counts
-  const filtered = items.filter(x => {
-    if (filter === 'all') return ['movie','tv','person'].includes(x.media_type);
-    return x.media_type === filter;
-  });
   const counts = {
-    all: total,
-    movie: movieTotal,
-    tv: tvTotal,
-    person: Math.max(total - movieTotal - tvTotal, 0),
+    all:    total,
+    movie:  movieTotal,
+    tv:     tvTotal,
+    person: personTotal,
   };
 
   const pageSize = 20;
-  const start = (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, total);
+  const start    = (page - 1) * pageSize + 1;
+  const end      = Math.min(page * pageSize, total);
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
@@ -163,12 +170,12 @@ export default function SearchResultsPage() {
           Results for “<span className="italic">{query}</span>”
         </h1>
         <div className="absolute bottom-4 right-8 flex gap-2">
-          {(['all','movie','tv','person']).map(type => {
+          {['all','movie','tv','person'].map(type => {
             const label =
               type === 'all'   ? 'All'
-            : type === 'movie' ? 'Movies'
-            : type === 'tv'    ? 'Series'
-            :                   'People';
+              : type === 'movie' ? 'Movies'
+              : type === 'tv'    ? 'Series'
+              :                   'People';
             return (
               <button
                 key={type}
@@ -189,68 +196,67 @@ export default function SearchResultsPage() {
 
       {/* CONTENT */}
       <div className="px-4 py-8 space-y-6">
-        {loading ? (
-          <div className="text-center py-10">Loading…</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">No results found.</div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {filtered.map(item => {
-              if (item.media_type === 'movie' || item.media_type === 'tv') {
-                const provs = providersMap[item.id] || {};
-                const streaming = [
-                  ...(provs.flatrate||[]),
-                  ...(provs.rent   ||[]),
-                  ...(provs.buy    ||[]),
-                ].map(p => ({
-                  icon: p.logo_path
-                    ? <img
-                        key={p.provider_id}
-                        src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
-                        alt={p.provider_name}
-                        className="w-6 h-6 object-contain"
-                      />
-                    : null,
-                  name: p.provider_name,
-                }));
-                return (
-                  <ListComponent
-                    key={item.id}
-                    mediaType={item.media_type}
-                    mediaId={item.id}
-                    bookmarked={isInWatchlist(item.id, item.media_type)}
-                    isLoading={bookmarkLoadingStates.has(item.id)}
-                    streamingPlatforms={streaming}
-                    onBookmarkToggle={handleBookmarkToggle}
-                    onRate={value => rateMovie(item.id, sessionId, value)}
-                    onFavorite={() =>
-                      markAsFavorite(user.id, sessionId, item.id, item.media_type, true)
-                    }
-                    onAddToList={() =>
-                      addToWatchlist(user.id, sessionId, item.id, item.media_type, true)
-                    }
-                  />
-                );
-              }
-              return <PersonListItem key={item.id} person={item} />;
-            })}
-          </div>
-        )}
+        {loading
+          ? <div className="text-center py-10">Loading…</div>
+          : items.length === 0
+            ? <div className="text-center py-10 text-gray-400">No results found.</div>
+            : (
+              <div className="flex flex-col gap-4">
+                {items.map(item => (
+                  item.media_type === 'person'
+                    ? <PersonListItem key={item.id} person={item} />
+                    : (() => {
+                        const prov = watchProvidersMap[item.id] || { stream: [], rent: [], buy: [] };
+                        const streaming = [...prov.stream, ...prov.rent, ...prov.buy]
+                          .map(p => ({
+                            icon: p.logo_path
+                              ? <img
+                                  key={p.provider_id}
+                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
+                                  alt={p.provider_name}
+                                  className="w-6 h-6 object-contain"
+                                />
+                              : null,
+                            name: p.provider_name,
+                          }));
+                        return (
+                          <ListComponent
+                            key={item.id}
+                            mediaType={item.media_type}
+                            mediaId={item.id}
+                            bookmarked={isInWatchlist(item.id, item.media_type)}
+                            isLoading={bookmarkLoadingStates.has(item.id)}
+                            streamingPlatforms={streaming}
+                            onBookmarkToggle={handleBookmarkToggle}
+                            onRate={val => rateMovie(item.id, sessionId, val)}
+                            onFavorite={() =>
+                              markAsFavorite(user.id, sessionId, item.id, item.media_type, true)
+                            }
+                            onAddToList={() =>
+                              addToWatchlist(user.id, sessionId, item.id, item.media_type, true)
+                            }
+                          />
+                        );
+                      })()
+                ))}
+              </div>
+            )
+        }
 
-        {/* pagination */}
-        {total > 0 && (
+        {/* PAGINATION */}
+        {total > pageSize && (
           <div className="flex justify-center items-center gap-4 pt-4">
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => Math.max(p-1,1))}
-              disabled={page===1}
+              onClick={() => setPage(p => Math.max(p - 1, 1))}
+              disabled={page === 1}
             >
               « Prev
             </button>
             <span>Page {page}</span>
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => p+1)}
+              onClick={() => setPage(p => p + 1)}
               disabled={page * pageSize >= total}
             >
               Next »

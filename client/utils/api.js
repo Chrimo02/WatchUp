@@ -1,3 +1,4 @@
+// src/utils/api.js
 import axios from 'axios';
 
 // Replace with your TMDB API key
@@ -64,11 +65,11 @@ export const getTVShowVideos = (tvId) => api.get(`/tv/${tvId}/videos`);
 export const getMovieKeywords = (movieId) =>
   api.get(`/movie/${movieId}/keywords`);
 
-export const getShowKeywords = (tvId) => 
-  api.get(`/tv/${tvId}/keywords`)
+export const getShowKeywords = (tvId) =>
+  api.get(`/tv/${tvId}/keywords`);
 
 // Similar content
-export const getSimilarMovies = (movieId, page = 1) => 
+export const getSimilarMovies = (movieId, page = 1) =>
   api.get(`/movie/${movieId}/similar`, { params: { page } });
 
 export const getRecommendedMovies = (movieId, page = 1) =>
@@ -77,27 +78,32 @@ export const getRecommendedMovies = (movieId, page = 1) =>
 export const getRecommendedTVShows = (tvId, page = 1) =>
   api.get(`/tv/${tvId}/recommendations`, { params: { page } });
 
-export const getSimilarTVShows = (tvId, page = 1) => 
+export const getSimilarTVShows = (tvId, page = 1) =>
   api.get(`/tv/${tvId}/similar`, { params: { page } });
 
 export const getTVShowExternalIds = (tvId) =>
   api.get(`/tv/${tvId}/external_ids`);
 
 // Search
-export const searchMovies = (query, page = 1) => 
+export const searchMovies = (query, page = 1) =>
   api.get('/search/movie', { params: { query, page } });
 
-export const searchTVShows = (query, page = 1) => 
+export const searchTVShows = (query, page = 1) =>
   api.get('/search/tv', { params: { query, page } });
 
-export const searchMulti = (query, page = 1) => 
+// Multi-search (movies, TV, people)
+export const searchMulti = (query, page = 1) =>
   api.get('/search/multi', { params: { query, page } });
 
+// Neue Funktion: dedizierte Personensuche
+export const searchPeople = (query, page = 1) =>
+  api.get('/search/person', { params: { query, page } });
+
 // Discover
-export const discoverMovies = (params) => 
+export const discoverMovies = (params) =>
   api.get('/discover/movie', { params });
 
-export const discoverTVShows = (params) => 
+export const discoverTVShows = (params) =>
   api.get('/discover/tv', { params });
 
 // Genres
@@ -107,46 +113,46 @@ export const getTVGenres = () => api.get('/genre/tv/list');
 // Authentication
 export const auth = {
   createRequestToken: () => api.get('/authentication/token/new'),
-  createSession: (requestToken) => 
+  createSession: (requestToken) =>
     api.post('/authentication/session/new', { request_token: requestToken }),
-  deleteSession: (sessionId) => 
+  deleteSession: (sessionId) =>
     api.delete('/authentication/session', { data: { session_id: sessionId } }),
-  getAccount: (sessionId) => 
+  getAccount: (sessionId) =>
     api.get('/account', { params: { session_id: sessionId } }),
 };
 
 // User specific endpoints
-export const getUserLists = (accountId, sessionId) => 
+export const getUserLists = (accountId, sessionId) =>
   api.get(`/account/${accountId}/lists`, { params: { session_id: sessionId } });
 
-export const getFavoriteMovies = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/favorite/movies`, { 
-    params: { session_id: sessionId, page } 
+export const getFavoriteMovies = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/favorite/movies`, {
+    params: { session_id: sessionId, page },
   });
 
-export const getFavoriteTVShows = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/favorite/tv`, { 
-    params: { session_id: sessionId, page } 
+export const getFavoriteTVShows = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/favorite/tv`, {
+    params: { session_id: sessionId, page },
   });
 
-export const getWatchlistMovies = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/watchlist/movies`, { 
-    params: { session_id: sessionId, page } 
+export const getWatchlistMovies = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/watchlist/movies`, {
+    params: { session_id: sessionId, page },
   });
 
-export const getWatchlistTVShows = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/watchlist/tv`, { 
-    params: { session_id: sessionId, page } 
+export const getWatchlistTVShows = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/watchlist/tv`, {
+    params: { session_id: sessionId, page },
   });
 
-export const getRatedMovies = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/rated/movies`, { 
-    params: { session_id: sessionId, page } 
+export const getRatedMovies = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/rated/movies`, {
+    params: { session_id: sessionId, page },
   });
 
-export const getRatedTVShows = (accountId, sessionId, page = 1) => 
-  api.get(`/account/${accountId}/rated/tv`, { 
-    params: { session_id: sessionId, page } 
+export const getRatedTVShows = (accountId, sessionId, page = 1) =>
+  api.get(`/account/${accountId}/rated/tv`, {
+    params: { session_id: sessionId, page },
   });
 
 // List management functions
@@ -159,9 +165,10 @@ export const createList = (sessionId, name, description = "") =>
       language: "en",
     },
     { params: { session_id: sessionId } },
-  )
+  );
 
-export const getListDetails = (listId, sessionId) => api.get(`/list/${listId}`, { params: { session_id: sessionId } })
+export const getListDetails = (listId, sessionId) =>
+  api.get(`/list/${listId}`, { params: { session_id: sessionId } });
 
 export const addMovieToList = (listId, sessionId, movieId) =>
   api.post(
@@ -170,7 +177,7 @@ export const addMovieToList = (listId, sessionId, movieId) =>
       media_id: movieId,
     },
     { params: { session_id: sessionId } },
-  )
+  );
 
 export const removeMovieFromList = (listId, sessionId, movieId) =>
   api.post(
@@ -179,33 +186,50 @@ export const removeMovieFromList = (listId, sessionId, movieId) =>
       media_id: movieId,
     },
     { params: { session_id: sessionId } },
-  )
+  );
 
-export const deleteList = (listId, sessionId) => api.delete(`/list/${listId}`, { params: { session_id: sessionId } })
+export const deleteList = (listId, sessionId) =>
+  api.delete(`/list/${listId}`, { params: { session_id: sessionId } });
 
-export const markAsFavorite = (accountId, sessionId, mediaId, mediaType, favorite) => 
-  api.post(`/account/${accountId}/favorite`, { 
-    media_type: mediaType,
-    media_id: mediaId,
-    favorite,
-  }, { params: { session_id: sessionId } });
+export const markAsFavorite = (accountId, sessionId, mediaId, mediaType, favorite) =>
+  api.post(
+    `/account/${accountId}/favorite`,
+    {
+      media_type: mediaType,
+      media_id: mediaId,
+      favorite,
+    },
+    { params: { session_id: sessionId } },
+  );
 
-export const addToWatchlist = (accountId, sessionId, mediaId, mediaType, watchlist) => 
-  api.post(`/account/${accountId}/watchlist`, { 
-    media_type: mediaType,
-    media_id: mediaId,
-    watchlist,
-  }, { params: { session_id: sessionId } });
+export const addToWatchlist = (accountId, sessionId, mediaId, mediaType, watchlist) =>
+  api.post(
+    `/account/${accountId}/watchlist`,
+    {
+      media_type: mediaType,
+      media_id: mediaId,
+      watchlist,
+    },
+    { params: { session_id: sessionId } },
+  );
 
-export const rateMovie = (movieId, sessionId, value) => 
-  api.post(`/movie/${movieId}/rating`, { 
-    value,
-  }, { params: { session_id: sessionId } });
+export const rateMovie = (movieId, sessionId, value) =>
+  api.post(
+    `/movie/${movieId}/rating`,
+    {
+      value,
+    },
+    { params: { session_id: sessionId } },
+  );
 
-export const rateTVShow = (tvId, sessionId, value) => 
-  api.post(`/tv/${tvId}/rating`, { 
-    value,
-  }, { params: { session_id: sessionId } });
+export const rateTVShow = (tvId, sessionId, value) =>
+  api.post(
+    `/tv/${tvId}/rating`,
+    {
+      value,
+    },
+    { params: { session_id: sessionId } },
+  );
 
 // Additional helper functions
 export const getImageUrl = (path, size = 'w500') => {
@@ -222,42 +246,43 @@ export const getBackdropUrl = (path, size = 'w1280') => {
   if (!path) return '/placeholder-backdrop.jpg';
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
-export const deleteMovieRating = (movieId, sessionId) => 
-  api.delete(`/movie/${movieId}/rating`, { 
-    params: { session_id: sessionId } 
+
+export const deleteMovieRating = (movieId, sessionId) =>
+  api.delete(`/movie/${movieId}/rating`, {
+    params: { session_id: sessionId },
   });
 
-export const deleteTVShowRating = (tvId, sessionId) => 
-  api.delete(`/tv/${tvId}/rating`, { 
-    params: { session_id: sessionId } 
+export const deleteTVShowRating = (tvId, sessionId) =>
+  api.delete(`/tv/${tvId}/rating`, {
+    params: { session_id: sessionId },
   });
-
 
 // Get movie release dates and certifications
-export const getMovieReleaseDates = (movieId) => 
+export const getMovieReleaseDates = (movieId) =>
   api.get(`/movie/${movieId}/release_dates`);
 
 // Get TV show content ratings
-export const getTVShowContentRatings = (tvId) => 
+export const getTVShowContentRatings = (tvId) =>
   api.get(`/tv/${tvId}/content_ratings`);
 
 // Modified api instance to include language parameter
-const apiWithLanguage = (language = 'en-US') => axios.create({
-  baseURL: BASE_URL,
-  params: {
-    api_key: API_KEY,
-    language: language,
-  },
-});
+const apiWithLanguage = (language = 'en-US') =>
+  axios.create({
+    baseURL: BASE_URL,
+    params: {
+      api_key: API_KEY,
+      language: language,
+    },
+  });
 
 // Updated movie details with language support
-export const getMovieDetailsWithLanguage = (movieId, language = 'en-US') => 
+export const getMovieDetailsWithLanguage = (movieId, language = 'en-US') =>
   apiWithLanguage(language).get(`/movie/${movieId}`);
 
 // Updated TV show details with language support
 export const getTVShowDetailsWithLanguage = (tvId, language = 'en-US') =>
   apiWithLanguage(language).get(`/tv/${tvId}`, {
-    params: { append_to_response: 'external_ids' }
+    params: { append_to_response: 'external_ids' },
   });
 
 export const getTVShowWatchProviders = (tvId) =>
@@ -266,26 +291,24 @@ export const getTVShowWatchProviders = (tvId) =>
 export const getMovieWatchProviders = (movieId) =>
   api.get(`/movie/${movieId}/watch/providers`);
 
-
 // Helper function to get age rating for specific region
 export const getAgeRatingForRegion = (releaseDates, region = 'US') => {
   if (!releaseDates || !releaseDates.results) return null;
-  
+
   const regionData = releaseDates.results.find(r => r.iso_3166_1 === region);
   if (!regionData || !regionData.release_dates) return null;
-  
-  // Find the release with certification
+
   const releaseWithCertification = regionData.release_dates.find(
     rd => rd.certification && rd.certification.trim() !== ''
   );
-  
+
   return releaseWithCertification ? releaseWithCertification.certification : null;
 };
 
 // Helper function to get TV content rating for specific region
 export const getTVContentRatingForRegion = (contentRatings, region = 'US') => {
   if (!contentRatings || !contentRatings.results) return null;
-  
+
   const regionData = contentRatings.results.find(r => r.iso_3166_1 === region);
   return regionData ? regionData.rating : null;
 };
@@ -316,10 +339,10 @@ export const getAgeRatingInfo = (certification, region = 'US') => {
       '18': { age: 18, color: 'bg-red-800', description: 'Suitable for adults only' },
     },
   };
-  
+
   const regionRatings = ratings[region] || ratings.US;
   const ratingInfo = regionRatings[certification];
-  
+
   if (!ratingInfo) {
     return {
       age: 0,
@@ -328,7 +351,7 @@ export const getAgeRatingInfo = (certification, region = 'US') => {
       displayText: certification || 'NR'
     };
   }
-  
+
   return {
     ...ratingInfo,
     displayText: certification
@@ -336,27 +359,27 @@ export const getAgeRatingInfo = (certification, region = 'US') => {
 };
 
 // Account states for movies and TV shows
-export const getMovieAccountStates = (movieId, sessionId) => 
-  api.get(`/movie/${movieId}/account_states`, { 
-    params: { session_id: sessionId } 
+export const getMovieAccountStates = (movieId, sessionId) =>
+  api.get(`/movie/${movieId}/account_states`, {
+    params: { session_id: sessionId }
   });
 
-export const getTVShowAccountStates = (tvId, sessionId) => 
-  api.get(`/tv/${tvId}/account_states`, { 
-    params: { session_id: sessionId } 
+export const getTVShowAccountStates = (tvId, sessionId) =>
+  api.get(`/tv/${tvId}/account_states`, {
+    params: { session_id: sessionId }
   });
 
 // Batch function to get account states for multiple items
 export const getBatchAccountStates = async (items, sessionId) => {
   const accountStates = {};
-  
+
   try {
     const promises = items.map(async (item) => {
       try {
-        const response = item.type === 'movie' || item.type === 'film' 
+        const response = item.type === 'movie' || item.type === 'film'
           ? await getMovieAccountStates(item.id, sessionId)
           : await getTVShowAccountStates(item.id, sessionId);
-        
+
         return {
           id: item.id,
           type: item.type,
@@ -373,7 +396,7 @@ export const getBatchAccountStates = async (items, sessionId) => {
     });
 
     const results = await Promise.all(promises);
-    
+
     results.forEach(result => {
       accountStates[`${result.type}_${result.id}`] = result.states;
     });
@@ -384,6 +407,7 @@ export const getBatchAccountStates = async (items, sessionId) => {
     return {};
   }
 };
+
 export const getUpcomingMoviesWithVideos = async (page = 1) => {
   try {
     const { data } = await api.get('/movie/upcoming', { params: { page } });
@@ -409,10 +433,9 @@ export const getUpcomingMoviesWithVideos = async (page = 1) => {
         }
       })
     );
-    
-    // Filter out movies without trailers
+
     const moviesWithTrailers = moviesWithVideos.filter(movie => movie.hasTrailer);
-    
+
     return {
       ...data,
       results: moviesWithTrailers
@@ -426,16 +449,12 @@ export const getUpcomingMoviesWithVideos = async (page = 1) => {
 // Error handling wrapper
 export const handleApiError = (error) => {
   if (error.response) {
-    // The request was made and the server responded with a status code
-    // that falls out of the range of 2xx
     console.error('API Error:', error.response.data);
     return error.response.data.status_message || 'An error occurred';
   } else if (error.request) {
-    // The request was made but no response was received
     console.error('Network Error:', error.request);
     return 'Network error. Please check your connection.';
   } else {
-    // Something happened in setting up the request that triggered an Error
     console.error('Error:', error.message);
     return error.message;
   }
