@@ -246,7 +246,8 @@ export default function SearchResultsPage() {
                           [...(watchProvidersMap[item.id]?.stream || []),
                            ...(watchProvidersMap[item.id]?.rent || []),
                            ...(watchProvidersMap[item.id]?.buy || [])]
-                            .map(p => p.logo_path
+                            .map(p => ({
+                              icon: p.logo_path
                               ? <img
                                   key={p.provider_id}
                                   src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
@@ -254,7 +255,7 @@ export default function SearchResultsPage() {
                                   className="w-6 h-6 object-contain"
                                 />
                               : null
-                            )
+                          }))
                         }
                         onBookmarkToggle={handleBookmarkToggle}
                         onRate={val => rateMovie(item.id, sessionId, val)}
