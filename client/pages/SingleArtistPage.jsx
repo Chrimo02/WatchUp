@@ -10,6 +10,7 @@ import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerson } from '../contexts/PersonContext';
 import profilePlaceholder from '../assets/placeholder-profile.png';
+import { SortSelect } from '../components/ui/SortSelect';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
@@ -288,38 +289,14 @@ export default function SingleArtistPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <FilterTabs selected={filter} onSelect={setFilter} />
             <div className="relative inline-block">
-              <select
+              <SortSelect
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-                className="appearance-none bg-[#141414] border border-gray-700 text-white py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-              >
-                <option value="date_desc">Date ↓</option>
-                <option value="date_asc">Date ↑</option>
-                <option value="name_asc">Name A→Z</option>
-                <option value="name_desc">Name Z→A</option>
-                <option value="rating_desc">Rating ↓</option>
-                <option value="rating_asc">Rating ↑</option>
-                <option value="popularity_desc">Beliebt ↓</option>
-                <option value="popularity_asc">Beliebt ↑</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 20 20"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-                  />
-                </svg>
-              </div>
+                onChange={(val) => {
+                  setSortOption(val);
+                }}
+              />
             </div>
           </div>
-
           <CreditsListGrid actors={sortedActors} onBookmarkToggle={handleBookmark} />
         </div>
       </div>
