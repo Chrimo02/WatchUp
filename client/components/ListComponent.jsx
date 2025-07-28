@@ -1,6 +1,7 @@
 // src/components/ListComponent.jsx
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'                // ← Added
 
 import { useMovies }     from '../contexts/MovieContext'
 import { useLanguage }   from '../contexts/LanguageContext'     
@@ -44,16 +45,16 @@ export default function ListComponent({
     async function loadDetails() {
       try {
         const res =
-        mediaType === 'movie'
-        ? (await getMovieDetailsWithLanguage(mediaId, language)).data
-        : (await getTVShowDetailsWithLanguage(mediaId, language)).data
+          mediaType === 'movie'
+            ? (await getMovieDetailsWithLanguage(mediaId, language)).data
+            : (await getTVShowDetailsWithLanguage(mediaId, language)).data
         setDetails(res)
       } catch (err) {
         console.error('Failed to load media details', err)
       }
     }
     loadDetails()
-}, [mediaType, mediaId, language])
+  }, [mediaType, mediaId, language])
 
   /* ────────── load regional age rating ────────── */
   useEffect(() => {
@@ -93,8 +94,8 @@ export default function ListComponent({
   const minutes    = totalMinutes % 60
   const runtimeStr = `${hours}h ${minutes}m`
 
-  // keep “PG‑13” etc. in one piece
-  const certFixed  = (ageCert || '').replace('-', '‑')
+  // keep “PG-13” etc. in one piece
+  const certFixed  = (ageCert || '').replace('-', '-')
 
   /* ────────── handlers ────────── */
   const handleBookmarkClick = e => {
@@ -111,18 +112,22 @@ export default function ListComponent({
       <div className="flex">
         {/* Poster */}
         <div className="flex-shrink-0 mr-6 self-stretch rounded-2xl overflow-hidden">
-          <img
-            src={getPosterUrl(details.poster_path, 'w500')}
-            alt={title}
-            className="w-[150px] h-full object-cover"
-          />
+          <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+            <img
+              src={getPosterUrl(details.poster_path, 'w500')}
+              alt={title}
+              className="w-[150px] h-full object-cover"
+            />
+          </Link>                                            {/* ← Added */}
         </div>
 
         {/* Main content */}
         <div className="flex flex-col space-y-2 flex-1 text-white">
           {/* Title */}
           <h2 className="font-poppins text-2xl lg:text-3xl font-bold leading-tight">
-            {title}
+            <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+              {title}
+            </Link>                                            {/* ← Added */}
           </h2>
 
           {/* Info row */}
