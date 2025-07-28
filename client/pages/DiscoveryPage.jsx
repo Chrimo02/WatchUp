@@ -39,6 +39,12 @@ export default function DiscoveryPage() {
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { region } = useLanguage();
 
+  const certThresholds = {
+    US: 'PG-13', DE: 'FSK 12', GB: '12', FR: '12',
+    ES: '13', CA: 'PG-13', AU: 'PG', JP: 'G', KR: '12'
+  };
+  const certificationLTE = certThresholds[region] || 'PG-13';
+
   const [movies, setMovies] = useState([]);
   const [totalResults, setTotalResults] = useState(0);
   const [providersMap, setProvidersMap] = useState({});
@@ -92,6 +98,9 @@ const [viewMode, setViewMode] = useState("grid");
           const { results: res, total_results } = await discoverMoviesByFilter({
             page,
             sort_by: sortBy,
+            include_adult: false,
+            certification_country: region,
+            certification_lte: certificationLTE,
             "vote_count.gte": 50,
             ...filters,
           });

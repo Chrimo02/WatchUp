@@ -100,11 +100,23 @@ export const searchPeople = (query, page = 1) =>
   api.get('/search/person', { params: { query, page } });
 
 // Discover
-export const discoverMovies = (params) =>
-  api.get('/discover/movie', { params });
+export const discoverMovies = (params = {}) =>
+  api.get('/discover/movie', {
+    params: {
+      include_adult: false,
+      certification_country: params.certification_country || 'US',
+      'certification.lte':   params['certification.lte']     || 'PG-13',
+      ...params
+    }
+  });
 
-export const discoverTVShows = (params) =>
-  api.get('/discover/tv', { params });
+export const discoverTVShows = (params = {}) =>
+  api.get('/discover/tv', {
+    params: {
+      include_adult: false,
+      ...params
+    }
+  });
 
 // Genres
 export const getGenres = () => api.get('/genre/movie/list');
