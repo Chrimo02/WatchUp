@@ -154,7 +154,7 @@ export default function DiscoveryPage() {
               <span>Filter</span>
               <ChevronDown className="w-4 h-4 text-white" />
             </Popover.Button>
-            <Popover.Panel className=" fixed right-0 mt-2 w-[600px] bg-[#141414] rounded shadow-lg z-10">
+            <Popover.Panel className="absolute left-[-200px] mt-2 w-[600px] bg-[#141414] rounded-[50px] shadow-lg z-20">
               <AdvancedSearch />
             </Popover.Panel>
           </Popover>

@@ -133,9 +133,6 @@ function AdvancedSearch() {
 
     return (
 
-        <div className="w-full bg-movie-bg font-poppins flex items-center justify-center p-4">
-            <div className="w-full max-w-[666px] relative">
-                {/* Main Container */}
                 <div className="w-full bg-movie-bg rounded-[50px] border border-movie-card">
                     <div className="p-[28px]">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-[65px]">
@@ -344,8 +341,7 @@ function AdvancedSearch() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+       
     );
 }
 // Standard-Export für Kompatibilität (optional, falls noch genutzt)
