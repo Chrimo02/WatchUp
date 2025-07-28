@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePerson } from '../contexts/PersonContext';
 import profilePlaceholder from '../assets/placeholder-profile.png';
 import { SortSelect } from '../components/ui/SortSelect';
+import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
@@ -30,6 +31,8 @@ export default function SingleArtistPage() {
     fetchPersonAndCredits,
     clearPerson
   } = usePerson();
+
+  const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
 
   const [filter, setFilter] = useState('movies');
   const [sortOption, setSortOption] = useState('date_desc');
@@ -276,7 +279,8 @@ export default function SingleArtistPage() {
             title="Known For"
             movieItems={knownForMovies}
             seriesItems={knownForTV}
-            onBookmarkToggle={handleBookmark}
+            onBookmarkToggle={handleBookmarkToggle}
+            bookmarkLoadingStates={bookmarkLoadingStates}
             showTabSwitcher
             defaultTab="movies"
           />
