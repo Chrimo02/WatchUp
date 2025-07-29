@@ -238,7 +238,7 @@ export default function SingleArtistPage() {
     <div className="bg-[#141414] text-white w-full">
       {/* Header */}
       <div className="px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="space-y-6">
+        <div className="space-y-6 order-2 lg:order-1">
           <ArtistShowcase
             portraitSrc={
               person.profile_path
@@ -249,7 +249,7 @@ export default function SingleArtistPage() {
           <PersonalInfoCard info={personalInfo} />
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 order-1 lg:order-2">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold">
             {person.name}
           </h1>

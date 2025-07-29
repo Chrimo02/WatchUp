@@ -4,7 +4,7 @@ import CreditsListItem from './CreditsListItem';
 
 export default function CreditsListGrid({ actors, onBookmarkToggle }) {
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-4 auto-rows-fr">
       {actors.map(a => (
         <CreditsListItem
           key={`${a.type}-${a.id}`}
