@@ -70,6 +70,7 @@ const playTrailer = () => {
                 onFavoriteToggle={movieData.onFavoriteToggle}
                 onWatchlistToggle={movieData.onWatchlistToggle}
                 onPlayTrailer={playTrailer}
+                onAddToList={movieData.onAddToList} 
               />
 
               <MovieOverview 

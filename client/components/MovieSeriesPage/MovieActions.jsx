@@ -11,34 +11,25 @@ const MovieActions = ({
   isInWatchlist,
   onFavoriteToggle,
   onWatchlistToggle,
-  onPlayTrailer
+  onPlayTrailer,
+  onAddToList
 }) => {
-  const handleFavoriteClick = () => {
-    if (isAuthenticated) {
-      onFavoriteToggle();
-    } else {
-      alert('Please sign in to add to favorites');
-    }
-  };
-
-  const handleWatchlistClick = () => {
-    if (isAuthenticated) {
-      onWatchlistToggle();
-    } else {
-      alert('Please sign in to add to watchlist');
-    }
-  };
 
   return (
     <div className="flex flex-wrap gap-3">
       {/* Add to List Button */}
-      <button className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center">
+      <button
+        onClick={() => {
+          onAddToList
+        }}
+        className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
+      >
         <img src={AddToList} className="w-5 h-5" alt="Add to list" />
       </button>
 
       {/* Favorite Button */}
       <button
-        onClick={handleFavoriteClick}
+        onClick={onFavoriteToggle}
         className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
       >
         <img
@@ -50,7 +41,7 @@ const MovieActions = ({
 
       {/* Watchlist Button */}
       <button
-        onClick={handleWatchlistClick}
+        onClick={onWatchlistToggle}
         className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
       >
         <img

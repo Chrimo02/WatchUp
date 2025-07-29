@@ -9,6 +9,7 @@ import { useOmdb } from '../contexts/OmdbContext';
 import { useMediaTransforms } from '../hooks/useMediaTransforms';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useLanguage } from '../contexts/LanguageContext';
+import AddToListModal from "../components/AddToListModal";
 import { 
   posterSizes, 
   backdropSizes, 
@@ -30,12 +31,11 @@ import MovieSlider from "../components/MovieSlider"
 import WatchProviders from "../components/MovieSeriesPage/WatchProviders"
 import CastSlider from "../components/MovieSeriesPage/CastSlider"
 import { Sidebar } from "../components/MovieSeriesPage/Sidebar"
-import AddToListModal from "../components/modals/AddToListModal"
 
 const MovieDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user, sessionId } = useAuth()
+  const { isAuthenticated, user, sessionId, login } = useAuth()
   const { language, region } = useLanguage()
   const { getMovieDetails, selectedMovie } = useOmdb()
   const { loading, error, fetchMovieCredits, fetchMovieVideos, getAccountStates } = useMovies()
@@ -267,8 +267,7 @@ const MovieDetailsPage = () => {
 
   const handleFavoriteToggle = async () => {
     if (!isAuthenticated || !user || !sessionId) {
-      showNotification("Please sign in with your TMDB account to add to favorites", "error")
-      return
+      return login()
     }
 
     try {
@@ -285,7 +284,7 @@ const MovieDetailsPage = () => {
 
   const handleWatchlistToggle = async () => {
     if (!isAuthenticated || !user || !sessionId) {
-      showNotification("Please sign in with your TMDB account to add to watchlist", "error")
+      return login()
       return
     }
 
@@ -303,8 +302,7 @@ const MovieDetailsPage = () => {
 
   const handleRateMovie = async (rating) => {
     if (!isAuthenticated || !sessionId) {
-      showNotification("Please sign in with your TMDB account to rate movies", "error")
-      return
+      return login()
     }
 
     try {
@@ -325,6 +323,7 @@ const MovieDetailsPage = () => {
     setShowAddToListModal(true)
   }
 
+  
   const getMovieInfoData = () => {
     if (!movie) return null
 
@@ -493,14 +492,18 @@ const MovieDetailsPage = () => {
         </section>
       </div>
 
-      {/* Add to List Modal */}
       <AddToListModal
         isOpen={showAddToListModal}
         onClose={() => setShowAddToListModal(false)}
-        movieId={movie?.id}
-        movieTitle={movie?.title}
+        mediaId={movie.id}
         mediaType="movie"
+        onAdded={(listId) => {
+          // optional: refetch lists or update local state
+          showNotification("Added to your list!");
+          setShowAddToListModal(false);
+        }}
       />
+
     </div>
   )
 }

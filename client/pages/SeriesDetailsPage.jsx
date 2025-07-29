@@ -7,6 +7,7 @@ import SeasonsList from '../components/SeasonsList';
 import PLACEHOLDER from '../assets/placeholder-profile.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import AddToListModal from "../components/AddToListModal";
 import {
   posterSizes,
   backdropSizes,
@@ -36,11 +37,11 @@ import { useMediaTransforms } from '../hooks/useMediaTransforms';
 const SeriesDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, user, sessionId } = useAuth();
+  const { isAuthenticated, user, sessionId, login } = useAuth();
   const { language, region } = useLanguage();
   const { transformTVShowData } = useMediaTransforms();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
-
+  const [showAddToListModal, setShowAddToListModal] = useState(false)
   const { loading, error, fetchTVShowVideos, getAccountStates } = useMovies();
   const { getSeriesDetails, selectedSeries } = useOmdb();
 
@@ -68,6 +69,13 @@ const SeriesDetailsPage = () => {
     setNotification({ show: true, message: msg, type });
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   };
+  const handleAddToList = () => {
+    if (!isAuthenticated || !sessionId) {
+       return login()
+
+    }
+    setShowAddToListModal(true)
+  }
 
   // Pick best trailer
   const pickTrailer = arr => {
@@ -168,7 +176,7 @@ const SeriesDetailsPage = () => {
   // Toast handlers for favorite/watchlist/rate
   const handleFavoriteToggle = async () => {
     if (!isAuthenticated || !user || !sessionId) {
-      toast('Please sign in to add favorites', 'error'); return;
+      return login()
     }
     try {
       await markAsFavorite(user.id, sessionId, showData.id, 'tv', !accountStates.favorite);
@@ -180,7 +188,7 @@ const SeriesDetailsPage = () => {
   };
   const handleWatchlistToggle = async () => {
     if (!isAuthenticated || !user || !sessionId) {
-      toast('Please sign in to update watchlist', 'error'); return;
+      return login()
     }
     try {
       await addToWatchlist(user.id, sessionId, showData.id, 'tv', !accountStates.watchlist);
@@ -192,7 +200,7 @@ const SeriesDetailsPage = () => {
   };
   const handleRate = async v => {
     if (!isAuthenticated || !sessionId) {
-      toast('Sign in to rate shows', 'error'); return;
+      return login()
     }
     try {
       await rateTVShow(showData.id, sessionId, v);
@@ -262,7 +270,8 @@ const SeriesDetailsPage = () => {
       onWatchlistToggle: handleWatchlistToggle,
       onRateMovie: handleRate,
       onClearRating: handleClearRating,
-      isAuthenticated
+      isAuthenticated,
+      onAddToList: handleAddToList
     };
   })();
 
@@ -349,8 +358,19 @@ const SeriesDetailsPage = () => {
           defaultTab="movies"
         />
       </section>
-
-        
+      <AddToListModal
+        isOpen={showAddToListModal}
+        onClose={() => setShowAddToListModal(false)}
+        /** pass your TV show’s ID here… */
+        mediaId={showData.id}
+        /** …and tell it this is a tv-show, not a movie */
+        mediaType="tv"
+        onAdded={(listId) => {
+          /** use your `toast` helper, not `showNotification` */
+          toast("Added to your list!");
+          setShowAddToListModal(false);
+        }}
+      />
       </div>
     </div>
   );
