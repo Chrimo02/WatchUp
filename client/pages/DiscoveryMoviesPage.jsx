@@ -258,7 +258,7 @@ const openListModal = id => setListTargetId(id);
     const el = sentinelRef.current;
     if (el) io.observe(el);
     return () => el && io.unobserve(el);
-  }, [hasMore, loadingPage]);
+  }, [hasMore, loadingPage, viewMode]);
 
   useEffect(() => {
     if (viewMode !== 'grid') return;
