@@ -1,0 +1,12 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_TMDB_API_KEY: 854166e2663dd398c32c659dbe1fe8f7
+        VITE_OMDB_API_KEY: b056365e
+    ports:
+      - "3000:80"
