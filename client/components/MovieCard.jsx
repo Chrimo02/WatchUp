@@ -86,7 +86,7 @@ export default function MovieCard({
             />
           )}
         </button>
-        )}
+        )
 
         {/* Score */}
         <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
