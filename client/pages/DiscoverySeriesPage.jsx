@@ -48,11 +48,11 @@ export default function DiscoverySeriesPage() {
     setRatingLocal,
     accountStates 
   } = useMovies();
- const { isAuthenticated, user, sessionId, login } = useAuth();
+  const { isAuthenticated, user, sessionId, login } = useAuth();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { language, region } = useLanguage();
 
-  // Adult-Content / Altersfreigabe ≤ PG-13 / FSK 12 etc.
+  // Certification ≤ PG-13/FSK 12 etc.
   const certLTE = (
     { US:'PG-13', DE:'FSK 12', GB:'12', FR:'12',
       ES:'13',   CA:'PG-13',  AU:'PG', JP:'G',  KR:'12' }
@@ -62,22 +62,13 @@ export default function DiscoverySeriesPage() {
   const gridRef     = useRef(null);
   const sentinelRef = useRef(null);
   const [rowH, setRowH] = useState(null);
+
   const cardRefs = useRef({});
   const setMenuRef = id => el => {
     if (el) cardRefs.current[id] = el;
     else delete cardRefs.current[id];
   };
-  const clearRating = async () => {
-  if (!ratingTarget) return;
-  try {
-    if (ratingTarget.type === 'movie')
-      await deleteMovieRating(ratingTarget.id, sessionId);
-    else
-      await deleteTVShowRating(ratingTarget.id, sessionId);
-  } finally {
-    closeRateModal();
-  }
-};
+
   const [filters, setFilters]       = useState({});
   const [sortOption, setSortOption] = useState(() => {
     if (preset === 'trending') return 'trending';
@@ -104,65 +95,58 @@ export default function DiscoverySeriesPage() {
   const [providersMap, setProvidersMap] = useState({});
   const [viewMode, setViewMode]   = useState('grid');
   const [menuOpenFor, setMenuOpenFor] = useState(null);
-  const [ratingTarget,   setRatingTarget]   = useState(null);   // { id,title,type,current }
-const [tempRating,     setTempRating]     = useState(0);
+  const [ratingTarget, setRatingTarget] = useState(null);
+  const [tempRating, setTempRating]     = useState(0);
 
-const [listTargetId,   setListTargetId]   = useState(null);   // nur die ID des Films
+  const openRateModal = (id, title, type, current = 0) =>
+    setRatingTarget({ id, title, type, current });
 
-const openRateModal = (id, title, type, current = 0) =>
-  setRatingTarget({ id, title, type, current });
+  const closeRateModal = () => {
+    setTempRating(0);
+    setRatingTarget(null);
+  };
 
-const closeRateModal = () => {
-  setTempRating(0);
-  setRatingTarget(null);
-};
-const clearRatingForShow = async tvId => {
-  try {
-    await deleteTVShowRating(tvId, sessionId);   
-    setRatingLocal(tvId, "tv", 0);              
-  } catch (err) {
-    console.error("Failed to clear rating:", err);
-  }
-};
+  // Clear rating for TV show
+  const clearRatingForShow = async tvId => {
+    try {
+      await deleteTVShowRating(tvId, sessionId);
+      setRatingLocal(tvId, "tv", 0);
+    } catch (err) {
+      console.error("Failed to clear rating:", err);
+    }
+  };
 
-const submitRating = async value => {
-  if (!ratingTarget) return;
-  try {
-   if (ratingTarget.type === 'movie')
-     await rateMovie(ratingTarget.id, sessionId, value);
-   else
-     await rateTVShow(ratingTarget.id, sessionId, value);
+  const submitRating = async value => {
+    if (!ratingTarget) return;
+    try {
+      await rateTVShow(ratingTarget.id, sessionId, value);
+      setRatingLocal(ratingTarget.id, "tv", value);
+    } finally {
+      closeRateModal();
+    }
+  };
 
-   // local cache sofort aktualisieren
-   setRatingLocal(ratingTarget.id, ratingTarget.type, value);
-  } finally {
-    closeRateModal();
-  }
-};
-
-const handleFavoriteToggle = async tvId => {
-  if (!isAuthenticated || !sessionId) return login();  
-
-  setShows(prev =>
-    prev.map(s => s.id === tvId ? { ...s, favorite: !s.favorite } : s)
-  );
-
-  try {
-    const show = shows.find(s => s.id === tvId);
-    await markAsFavorite(
-      user.id,
-      sessionId,
-      tvId,
-      "tv",
-      !show.favorite            
-    );
-  } catch (err) {
-    console.error("Failed to toggle favourite:", err);
+  const handleFavoriteToggle = async tvId => {
+    if (!isAuthenticated || !sessionId) return login();
     setShows(prev =>
       prev.map(s => s.id === tvId ? { ...s, favorite: !s.favorite } : s)
     );
-  }
-};
+    try {
+      const show = shows.find(s => s.id === tvId);
+      await markAsFavorite(
+        user.id,
+        sessionId,
+        tvId,
+        "tv",
+        !show.favorite
+      );
+    } catch (err) {
+      console.error("Failed to toggle favourite:", err);
+      setShows(prev =>
+        prev.map(s => s.id === tvId ? { ...s, favorite: !s.favorite } : s)
+      );
+    }
+  };
 
   const fetchPage = useCallback(async (p) => {
     if (loadingPage || fetchedPages.current.has(p) || !hasMore) return;
@@ -170,7 +154,7 @@ const handleFavoriteToggle = async tvId => {
     setLoading(true);
 
     try {
-      let batchStates = {};       
+      let batchStates = {};
       let raw = [], total = 0;
 
       if (sortOption === 'trending') {
@@ -295,7 +279,6 @@ const handleFavoriteToggle = async tvId => {
     isFavorite: s.favorite,
     myRating:  accountStates[`tv_${s.id}`]?.rated?.value ?? 0,
     poster: s.poster_path 
-    
       ? `https://image.tmdb.org/t/p/w500${s.poster_path}`
       : null,
     year: s.first_air_date?.slice(0,4),
@@ -326,7 +309,13 @@ const handleFavoriteToggle = async tvId => {
               <ChevronDown className="w-4 h-4 text-white"/>
             </Popover.Button>
             <Popover.Panel className="absolute left-[-240px] w-[600px] bg-[#141414] rounded-[50px] shadow-lg z-20">
-              <AdvancedSearch onSearch={f => { setFilters(f); setPage(1); }}/>
+              <AdvancedSearch
+                dateField="first_air_date"
+                onSearch={f => {
+                  setFilters(f);
+                  setPage(1);
+                }}
+              />
             </Popover.Panel>
           </Popover>
           <SortSelect value={sortOption} onChange={val => { setSortOption(val); setPage(1); }}/>
@@ -380,14 +369,11 @@ const handleFavoriteToggle = async tvId => {
                       <div className="absolute right-2 top-[calc(100%_-_48px)] z-20">
                         <MovieCardMenu
                           mediaType="tv"
-                                            
                           currentRating={s.myRating}
                           onRate={() => openRateModal(s.id, s.title, "tv", s.myRating)}
                           onClearRating={() => clearRatingForShow(s.id)}
-                                            
                           isFavorite={s.isFavorite}
                           onFavorite={() => handleFavoriteToggle(s.id)}
-                          
                         />
                       </div>
                     )}
@@ -408,24 +394,23 @@ const handleFavoriteToggle = async tvId => {
                     mediaType="tv"
                     mediaId={s.id}
                     bookmarked={s.bookmarked}
-                    onClearRating={() => clearRatingForMovie(m.id)}  
                     isLoading={s.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
                     onFavorite={() => handleFavoriteToggle(s.id)}
-                    onAddToList={()=>addToWatchlist(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
-                    onRate={val=>rateTVShow(s.id,sessionId,val)}
+                    onAddToList={() => addToWatchlist(user.id, sessionId, s.id, 'tv', !isInWatchlist(s.id, 'tv'))}
+                    onRate={val => rateTVShow(s.id, sessionId, val)}
                     streamingPlatforms={[
                       ...(providersMap[s.id]?.flatrate||[]),
                       ...(providersMap[s.id]?.rent||[]),
                       ...(providersMap[s.id]?.buy||[]),
                     ].map(p=>({
                       icon:p.logo_path
-                        ?<img src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} alt={p.provider_name} className="w-6 h-6 object-contain"/>
-                        :null,
+                        ? <img src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} alt={p.provider_name} className="w-6 h-6 object-contain"/>
+                        : null,
                       name:p.provider_name,
                     }))}
                   />
-                  {idx===showItems.length-1&&<div ref={sentinelRef}/>}
+                  {idx===showItems.length-1 && <div ref={sentinelRef}/>}
                 </Fragment>
               )}
             </div>
@@ -437,6 +422,7 @@ const handleFavoriteToggle = async tvId => {
           </div>
         )}
       </main>
+
       <RatingModal
         isOpen={!!ratingTarget}
         title={ratingTarget?.title ?? ''}
@@ -445,7 +431,7 @@ const handleFavoriteToggle = async tvId => {
         setTempRating={setTempRating}
         onClose={closeRateModal}
         onSubmit={submitRating}
-        onClearRating={clearRating}
+        onClearRating={clearRatingForShow}
       />
     </div>
   );
