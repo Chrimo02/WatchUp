@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useMovies } from '../contexts/MovieContext';
 import { getPosterUrl } from '../utils/api';
-import { Star, MoreHorizontal } from 'lucide-react';
+import { Star, MoreHorizontal, Trash2} from 'lucide-react';
 import AddToBookmark from '../assets/AddToBookmark.svg?url';
 import Bookmarked      from '../assets/Bookmarked.svg?url';
 
@@ -14,7 +14,11 @@ export default function MovieCard({
   isLoading  = false,
   onBookmarkToggle,
   onMenuClick,
+  onDelete,
   className = '',
+  showBookmark = true, // New prop to control bookmark visibility
+  showDeleteButton = false,
+  deleteLoading = false,
 }) {
   const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
   const [details, setDetails] = useState(null);
@@ -54,6 +58,13 @@ export default function MovieCard({
     onMenuClick(mediaId);
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation()
+    if (!deleteLoading && onDelete) {
+      onDelete(mediaId, mediaType)
+    }
+  }
+
   return (
     <div className={`
         relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
@@ -68,6 +79,7 @@ export default function MovieCard({
         />
 
         {/* Bookmark als echtes <button> */}
+        {showBookmark && (
         <button
           type="button"
           onClick={handleBookmarkClick}
@@ -89,6 +101,7 @@ export default function MovieCard({
               />
           }
         </button>
+        )}
 
         {/* Score */}
         <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
@@ -112,15 +125,37 @@ export default function MovieCard({
           </div>
         </div>
 
-        {onMenuClick && (
+        {/* Show delete button or menu button based on props */}
+        {showDeleteButton ? (
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            disabled={deleteLoading}
+            className={`
+              p-1 rounded-full transition-colors
+              ${
+                deleteLoading
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }
+            `}
+            title="Remove from list"
+          >
+            {deleteLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Trash2 className="w-5 h-5" />
+            )}
+          </button>
+        ) : onMenuClick ? (
           <button
             type="button"
             onClick={handleMenuClick}
             className="p-1 rounded-full bg-white text-gray-900 hover:bg-gray-700/80 hover:text-white transition-colors"
           >
-            <MoreHorizontal className="w-5 h-5"/>
+            <MoreHorizontal className="w-5 h-5" />
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -133,5 +168,9 @@ MovieCard.propTypes = {
   isLoading:        PropTypes.bool,
   onBookmarkToggle: PropTypes.func,
   onMenuClick:      PropTypes.func,
+  onDelete:         PropTypes.func,
   className:        PropTypes.string,
+  showBookmark:     PropTypes.bool,
+  showDeleteButton: PropTypes.bool,
+  deleteLoading:    PropTypes.bool,
 };

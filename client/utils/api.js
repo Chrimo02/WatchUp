@@ -161,6 +161,16 @@ export const createList = (sessionId, name, description = "") =>
     { params: { session_id: sessionId } },
   )
 
+export const editList = (listId, sessionId, name, description = "") =>
+  api.post(
+    `/list/${listId}`,
+    {
+      name,
+      description,
+    },
+    { params: { session_id: sessionId } },
+  )
+
 export const getListDetails = (listId, sessionId) => api.get(`/list/${listId}`, { params: { session_id: sessionId } })
 
 export const addMovieToList = (listId, sessionId, movieId) =>
