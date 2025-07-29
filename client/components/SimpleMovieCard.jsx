@@ -61,7 +61,7 @@ export default function SimpleMovieCard({
         {/* Rating badge */}
         <div className="absolute right-[5px] top-[5px] flex items-center gap-0.5 px-1 py-0.5 rounded-[10px] bg-black/80">
           <img src={Star} alt="Star" className="w-[11px] h-[11px]" />
-          <span className="text-white text-base leading-6 font-normal">{score}</span>
+          <span className="text-white text-base leading-6 font-normal">{score != 0 ? score : "N/A"}</span>
         </div>
 
         {/* Title */}
