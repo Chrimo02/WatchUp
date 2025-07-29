@@ -358,7 +358,13 @@ export const MovieProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+  const setRatingLocal = (mediaId, mediaType, value) => {
+    const key = getCacheKey(mediaId, mediaType);
+    setAccountStates(prev => ({
+      ...prev,
+      [key]: { ...(prev[key] ?? {}), rated: { value } },
+    }));
+  };
   // Fetch genres
   const fetchGenres = async () => {
     try {
@@ -413,6 +419,7 @@ export const MovieProvider = ({ children }) => {
         genres,
         upcomingMoviesWithTrailers,
         accountStates,
+        setRatingLocal, 
         fetchTrendingMovies,
         fetchPopularMovies,
         fetchTopRatedMovies,

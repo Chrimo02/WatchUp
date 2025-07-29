@@ -9,20 +9,20 @@ import React, {
 import { Popover } from '@headlessui/react';
 import { ChevronDown } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-
 import { useMovies }        from '../contexts/MovieContext';
-import { useAuth }          from '../contexts/AuthContext';
+import { useAuth  }          from '../contexts/AuthContext';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useLanguage }      from '../contexts/LanguageContext';
-
+import AddToListModal from '../components/AddToListModal';
+import RatingModal from '../components/MovieSeriesPage/RatingModal';
 import {
   getMovies,
   getMovieWatchProviders,
   markAsFavorite,
-  addToWatchlist,
   rateMovie,
   getMovieDetailsWithLanguage,
   getMovieReleaseDates,
+  deleteMovieRating,
   getAgeRatingForRegion,
 } from '../utils/api';
 
@@ -41,11 +41,14 @@ export default function DiscoveryMoviesPage() {
   const preset   = location.state?.preset ?? null;
 
   const {
-    discoverMoviesByFilter,
-    getBatchAccountStates,
-    isInWatchlist,
-  } = useMovies();
-  const { isAuthenticated, user, sessionId } = useAuth();
+   discoverMoviesByFilter,
+   getBatchAccountStates,
+   isInWatchlist,
+   accountStates,          
+   setRatingLocal,         
+ } = useMovies();
+
+  const { isAuthenticated, user, sessionId, login } = useAuth();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { language, region } = useLanguage();
 
@@ -88,6 +91,63 @@ export default function DiscoveryMoviesPage() {
   const [providersMap, setProviders] = useState({});
   const [viewMode, setViewMode]      = useState('grid');
   const [menuOpenFor, setMenuOpenFor] = useState(null);
+  const [ratingTarget,   setRatingTarget]   = useState(null);   
+  const [tempRating,     setTempRating]     = useState(0);
+
+  const [listTargetId,   setListTargetId]   = useState(null);  
+const openListModal = id => setListTargetId(id);
+  const openRateModal = (id, title, type, current = 0) =>
+    setRatingTarget({ id, title, type, current });
+
+  const closeRateModal = () => {
+    setTempRating(0);
+    setRatingTarget(null);
+  };
+
+  const submitRating = async value => {
+    if (!ratingTarget) return;
+    try {
+       await rateMovie(ratingTarget.id, sessionId, value);
+       setRatingLocal(ratingTarget.id, 'movie', value);  
+    } finally {
+      closeRateModal();
+    }
+  };
+
+  const clearRating = async () => {
+    if (!ratingTarget) return;
+    try {
+      await deleteMovieRating(ratingTarget.id, sessionId);
+      setRatingLocal(ratingTarget.id, 'movie', 0);
+    } finally {
+      closeRateModal();
+    }
+  };
+const handleFavoriteToggle = async movieId => {
+  if (!isAuthenticated || !sessionId) return login();   // asks the user to log‑in
+
+  // optimistic UI‑update
+  setMovies(prev =>
+    prev.map(m => m.id === movieId ? { ...m, favorite: !m.favorite } : m)
+  );
+
+  try {
+    const movie = movies.find(m => m.id === movieId);
+    await markAsFavorite(
+      user.id,
+      sessionId,
+      movieId,
+      "movie",
+      !movie.favorite            // ← new desired state
+    );
+  } catch (err) {
+    console.error("Failed to toggle favourite:", err);
+    // rollback on error
+    setMovies(prev =>
+      prev.map(m => m.id === movieId ? { ...m, favorite: !m.favorite } : m)
+    );
+  }
+};
 
   const fetchPage = useCallback(async (p) => {
     if (loadingPage || fetchedPages.current.has(p) || !hasMore) return;
@@ -95,6 +155,7 @@ export default function DiscoveryMoviesPage() {
     setLoading(true);
 
     try {
+      let batchStates = {};    
       let raw = [], total = 0;
 
       if (sortOption === 'trending') {
@@ -142,14 +203,18 @@ export default function DiscoveryMoviesPage() {
       }));
 
       if (isAuthenticated && sessionId && enriched.length) {
-        await getBatchAccountStates(
+        batchStates = await getBatchAccountStates(
           enriched.map(i => ({ id: i.id, type: 'movie' })), sessionId
         );
       }
 
       setMovies(prev => {
         const map = new Map(prev.map(m => [m.id, m]));
-        enriched.forEach(m => map.set(m.id, m));
+        enriched.forEach(m => {
+  const fav = batchStates?.[`movie_${m.id}`]?.favorite ?? false;
+  map.set(m.id, { ...m, favorite: fav });
+});
+
         return Array.from(map.values());
       });
       setTotal(total);
@@ -212,6 +277,8 @@ export default function DiscoveryMoviesPage() {
   const headerText = sortOption === 'trending' ? 'Trending Movies' : 'Discover Movies';
   const movieItems = movies.map(m => ({
     id: m.id,
+    isFavorite: m.favorite,
+    myRating: accountStates[`movie_${m.id}`]?.rated?.value ?? 0,
     title: m.title,
     poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
     year: m.release_date?.slice(0,4),
@@ -294,11 +361,17 @@ export default function DiscoveryMoviesPage() {
                     {menuOpenFor === m.id && (
                       <div className="absolute right-2 top-[calc(100%_-_48px)] z-20">
                         <MovieCardMenu
-                          onRate={rating => rateMovie(m.id, sessionId, rating)}
-                          onAddToList={() =>
-                            addToWatchlist(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
-                          onFavorite={() =>
-                            markAsFavorite(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
+                          onRate={() =>
+                            openRateModal(
+                              m.id,
+                              m.title,
+                              'movie',      
+                              m.myRating                             
+                            )
+                          }
+                          onAddToList= {() => openListModal(m.id)}
+                            
+                           onFavorite={() => handleFavoriteToggle(m.id)}
                           mediaType="movie"
                         />
                       </div>
@@ -322,8 +395,8 @@ export default function DiscoveryMoviesPage() {
                     bookmarked={m.bookmarked}
                     isLoading={m.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
-                    onFavorite={() => markAsFavorite(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
-                    onAddToList={() => addToWatchlist(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
+                    onFavorite={() => handleFavoriteToggle(m.id)}
+                    onAddToList={() => openListModal(m.id)}
                     onRate={val => rateMovie(m.id, sessionId, val)}
                     streamingPlatforms={[
                       ...(providersMap[m.id]?.flatrate || []),
@@ -353,6 +426,26 @@ export default function DiscoveryMoviesPage() {
           </div>
         )}
       </main>
+      {/* ───────────────────── RatingModal ───────────────────── */}
+<RatingModal
+  isOpen={!!ratingTarget}
+  title={ratingTarget?.title ?? ''}
+  currentRating={ratingTarget?.current ?? 0}
+  tempRating={tempRating}
+  setTempRating={setTempRating}
+  onClose={closeRateModal}
+  onSubmit={submitRating}
+  onClearRating={clearRating}
+/>
+
+{/* ─────────────────── Add‑to‑List Modal ───────────────── */}
+<AddToListModal
+  isOpen={listTargetId !== null}
+  onClose={() => setListTargetId(null)}
+  mediaId={listTargetId ?? 0}
+  onAdded={() => setListTargetId(null)}
+/>
+
     </div>
   );
 }

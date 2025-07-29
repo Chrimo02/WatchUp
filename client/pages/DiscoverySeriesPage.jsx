@@ -14,7 +14,7 @@ import { useMovies }         from '../contexts/MovieContext';
 import { useAuth }           from '../contexts/AuthContext';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
 import { useLanguage }       from '../contexts/LanguageContext';
-
+import RatingModal from '../components/MovieSeriesPage/RatingModal';
 import {
   getTVShows,
   getTVShowWatchProviders,
@@ -44,8 +44,10 @@ export default function DiscoverySeriesPage() {
     discoverTVShowsByFilter,
     getBatchAccountStates,
     isInWatchlist,
+    setRatingLocal,
+    accountStates 
   } = useMovies();
-  const { isAuthenticated, user, sessionId } = useAuth();
+ const { isAuthenticated, user, sessionId, login } = useAuth();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { language, region } = useLanguage();
 
@@ -91,6 +93,68 @@ export default function DiscoverySeriesPage() {
   const [providersMap, setProvidersMap] = useState({});
   const [viewMode, setViewMode]   = useState('grid');
   const [menuOpenFor, setMenuOpenFor] = useState(null);
+  const [ratingTarget,   setRatingTarget]   = useState(null);   // { id,title,type,current }
+const [tempRating,     setTempRating]     = useState(0);
+
+const [listTargetId,   setListTargetId]   = useState(null);   // nur die ID des Films
+
+const openRateModal = (id, title, type, current = 0) =>
+  setRatingTarget({ id, title, type, current });
+
+const closeRateModal = () => {
+  setTempRating(0);
+  setRatingTarget(null);
+};
+
+const submitRating = async value => {
+  if (!ratingTarget) return;
+  try {
+   if (ratingTarget.type === 'movie')
+     await rateMovie(ratingTarget.id, sessionId, value);
+   else
+     await rateTVShow(ratingTarget.id, sessionId, value);
+
+   // local cache sofort aktualisieren
+   setRatingLocal(ratingTarget.id, ratingTarget.type, value);
+  } finally {
+    closeRateModal();
+  }
+};
+
+const clearRating = async () => {
+  if (!ratingTarget) return;
+  try {
+    if (ratingTarget.type === 'movie')
+      await deleteMovieRating(ratingTarget.id, sessionId);
+    else
+      await deleteTVShowRating(ratingTarget.id, sessionId);
+  } finally {
+    closeRateModal();
+  }
+};
+const handleFavoriteToggle = async tvId => {
+  if (!isAuthenticated || !sessionId) return login();  
+
+  setShows(prev =>
+    prev.map(s => s.id === tvId ? { ...s, favorite: !s.favorite } : s)
+  );
+
+  try {
+    const show = shows.find(s => s.id === tvId);
+    await markAsFavorite(
+      user.id,
+      sessionId,
+      tvId,
+      "tv",
+      !show.favorite            
+    );
+  } catch (err) {
+    console.error("Failed to toggle favourite:", err);
+    setShows(prev =>
+      prev.map(s => s.id === tvId ? { ...s, favorite: !s.favorite } : s)
+    );
+  }
+};
 
   const fetchPage = useCallback(async (p) => {
     if (loadingPage || fetchedPages.current.has(p) || !hasMore) return;
@@ -98,6 +162,7 @@ export default function DiscoverySeriesPage() {
     setLoading(true);
 
     try {
+      let batchStates = {};       
       let raw = [], total = 0;
 
       if (sortOption === 'trending') {
@@ -144,14 +209,17 @@ export default function DiscoverySeriesPage() {
       }));
 
       if (isAuthenticated && sessionId && enriched.length) {
-        await getBatchAccountStates(
+        batchStates = await getBatchAccountStates(
           enriched.map(i => ({ id: i.id, type: 'tv' })), sessionId
         );
       }
 
       setShows(prev => {
         const map = new Map(prev.map(s => [s.id, s]));
-        enriched.forEach(s => map.set(s.id, s));
+        enriched.forEach(s => {
+          const fav = batchStates?.[`tv_${s.id}`]?.favorite ?? false;
+          map.set(s.id, { ...s, favorite: fav });
+        });
         return Array.from(map.values());
       });
       setTotal(total);
@@ -216,7 +284,10 @@ export default function DiscoverySeriesPage() {
   const showItems = shows.map(s => ({
     id: s.id,
     title: s.name,
-    poster: s.poster_path
+    isFavorite: s.favorite,
+    myRating:  accountStates[`tv_${s.id}`]?.rated?.value ?? 0,
+    poster: s.poster_path 
+    
       ? `https://image.tmdb.org/t/p/w500${s.poster_path}`
       : null,
     year: s.first_air_date?.slice(0,4),
@@ -300,10 +371,17 @@ export default function DiscoverySeriesPage() {
                     {menuOpenFor===s.id && (
                       <div className="absolute right-2 top-[calc(100%_-_48px)] z-20">
                         <MovieCardMenu
-                          onRate={rating=>rateTVShow(s.id,sessionId,rating)}
-                          onAddToList={()=>addToWatchlist(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
-                          onFavorite={()=>markAsFavorite(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
+                          onRate={() =>
+                            openRateModal(
+                              s.id,                    
+                              s.title,
+                              'tv',        
+                              s.myRating                             
+                            )
+                          }
+                          onFavorite={() => handleFavoriteToggle(s.id)}
                           mediaType="tv"
+                          
                         />
                       </div>
                     )}
@@ -326,7 +404,7 @@ export default function DiscoverySeriesPage() {
                     bookmarked={s.bookmarked}
                     isLoading={s.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
-                    onFavorite={()=>markAsFavorite(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
+                    onFavorite={() => handleFavoriteToggle(s.id)}
                     onAddToList={()=>addToWatchlist(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
                     onRate={val=>rateTVShow(s.id,sessionId,val)}
                     streamingPlatforms={[
@@ -352,6 +430,16 @@ export default function DiscoverySeriesPage() {
           </div>
         )}
       </main>
+      <RatingModal
+        isOpen={!!ratingTarget}
+        title={ratingTarget?.title ?? ''}
+        currentRating={ratingTarget?.current ?? 0}
+        tempRating={tempRating}
+        setTempRating={setTempRating}
+        onClose={closeRateModal}
+        onSubmit={submitRating}
+        onClearRating={clearRating}
+      />
     </div>
   );
 }
