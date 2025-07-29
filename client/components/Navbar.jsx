@@ -38,7 +38,6 @@ export default function Navbar() {
 
   useEffect(() => {
     const onClickOutside = e => {
-      // Nur schließen, wenn Klick weder im Profil-Dropdown noch im Mobile-Nav war
       if (
         menuRef.current && !menuRef.current.contains(e.target) &&
         mobileNavRef.current && !mobileNavRef.current.contains(e.target)
@@ -121,17 +120,26 @@ export default function Navbar() {
           {/* Desktop links */}
           <ul className="hidden lg:flex gap-6 ml-6">
             <li>
-              <Link to="/discover" className="text-white font-bold hover:opacity-80">
+              <Link
+                to="/discover/movies"
+                className="text-white font-bold hover:opacity-80"
+              >
                 Movies
               </Link>
             </li>
             <li>
-              <Link to="/discover?media=tv" className="text-white font-bold hover:opacity-80">
+              <Link
+                to="/discover/series"
+                className="text-white font-bold hover:opacity-80"
+              >
                 TV Shows
               </Link>
             </li>
             <li>
-              <Link to="/people" className="text-white font-bold hover:opacity-80">
+              <Link
+                to="/people"
+                className="text-white font-bold hover:opacity-80"
+              >
                 People
               </Link>
             </li>
@@ -168,25 +176,42 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <LanguageSelector />
 
-          <button title="Surprise me" onClick={handleShuffle} className="text-white hover:opacity-80">
+          <button
+            title="Surprise me"
+            onClick={handleShuffle}
+            className="text-white hover:opacity-80"
+          >
             <img src={Shuffle} alt="Shuffle" className="h-5 w-5" />
           </button>
 
-          <button onClick={handleWatchlistClick} className="flex items-center gap-1 text-white hover:opacity-80">
-            <img src={WatchlistIcon} alt="Watchlist" className="h-5 w-5" />
+          <button
+            onClick={handleWatchlistClick}
+            className="flex items-center gap-1 text-white hover:opacity-80"
+          >
+            <img
+              src={WatchlistIcon}
+              alt="Watchlist"
+              className="h-5 w-5"
+            />
             <span className="hidden lg:inline font-bold">Watchlist</span>
           </button>
 
           {/* Profile */}
           <div ref={menuRef} className="relative">
             <button
-              onClick={() => (isAuthenticated ? setMenuOpen(o => !o) : login())}
+              onClick={() =>
+                isAuthenticated ? setMenuOpen(o => !o) : login()
+              }
               className="flex items-center gap-1 text-white hover:opacity-80"
             >
               {isAuthenticated ? (
                 <User className="w-5 h-5 lg:w-6 lg:h-6" />
               ) : (
-                <img src={SignIn} alt="Sign in" className="w-5 h-5 lg:w-6 lg:h-6" />
+                <img
+                  src={SignIn}
+                  alt="Sign in"
+                  className="w-5 h-5 lg:w-6 lg:h-6"
+                />
               )}
               <span className="hidden lg:inline font-bold">
                 {isAuthenticated ? user.username : 'Sign in'}
@@ -199,7 +224,10 @@ export default function Navbar() {
                   <li>
                     <Link
                       to="/my-lists"
-                      onClick={() => { setMenuOpen(false); setMobileNavOpen(false); }}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        setMobileNavOpen(false)
+                      }}
                       className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg"
                     >
                       My Lists
@@ -207,7 +235,10 @@ export default function Navbar() {
                   </li>
                   <li>
                     <button
-                      onClick={() => { setMenuOpen(false); handleLogout(); }}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        handleLogout()
+                      }}
                       className="w-full text-left px-3 py-2 text-white hover:bg-white/10 rounded-lg"
                     >
                       Log Out
@@ -222,16 +253,19 @@ export default function Navbar() {
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div ref={mobileNavRef} className="lg:hidden bg-red-700 px-4 py-2 space-y-1">
+        <div
+          ref={mobileNavRef}
+          className="lg:hidden bg-red-700 px-4 py-2 space-y-1"
+        >
           <Link
-            to="/discover"
+            to="/discover/movies"
             onClick={() => setMobileNavOpen(false)}
             className="block text-white font-bold py-1 hover:opacity-80"
           >
             Movies
           </Link>
           <Link
-            to="/discover?media=tv"
+            to="/discover/series"
             onClick={() => setMobileNavOpen(false)}
             className="block text-white font-bold py-1 hover:opacity-80"
           >
