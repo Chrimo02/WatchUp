@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
 import PLACEHOLDER from '../assets/placeholder-profile.png';
+import NoImageFound from '../assets/no-image-found.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useMediaTransforms } from '../hooks/useMediaTransforms';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
@@ -335,7 +336,7 @@ const MovieDetailsPage = () => {
       
     const posterUrl = movie.poster_path 
       ? `${posterSizes.large}${movie.poster_path}`
-      : 'https://via.placeholder.com/500x750?text=No+Poster';
+      : NoImageFound;
 
     const keyCrewRoles = [
       'Director',
