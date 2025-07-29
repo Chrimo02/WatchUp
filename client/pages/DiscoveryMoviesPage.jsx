@@ -117,6 +117,14 @@ const openListModal = id => setListTargetId(id);
       closeRateModal();
     }
   };
+  const clearRatingForMovie = async movieId => {
+  try {
+    await deleteMovieRating(movieId, sessionId);
+    setRatingLocal(movieId, "movie", 0);      // wipe local cache
+  } catch (err) {
+    console.error("Failed to clear rating:", err);
+  }
+};
 
   const fetchPage = useCallback(async (p) => {
     if (loadingPage || fetchedPages.current.has(p) || !hasMore) return;
@@ -233,6 +241,7 @@ const openListModal = id => setListTargetId(id);
     discoverMoviesByFilter,
     isAuthenticated, sessionId, getBatchAccountStates,
   ]);
+
 
   useEffect(() => {
     setMovies([]); setProviders({}); setPage(1); setHasMore(true);
@@ -387,6 +396,7 @@ const openListModal = id => setListTargetId(id);
                              )
                            }
                           mediaType="movie"
+                          onClearRating={() => clearRatingForMovie(m.id)} 
                         />
                       </div>
                     )}

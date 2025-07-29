@@ -23,6 +23,7 @@ import {
   rateTVShow,
   getTVShowDetailsWithLanguage,
   getTVShowContentRatings,
+  deleteTVShowRating,
   getTVContentRatingForRegion,
 } from '../utils/api';
 
@@ -66,7 +67,17 @@ export default function DiscoverySeriesPage() {
     if (el) cardRefs.current[id] = el;
     else delete cardRefs.current[id];
   };
-
+  const clearRating = async () => {
+  if (!ratingTarget) return;
+  try {
+    if (ratingTarget.type === 'movie')
+      await deleteMovieRating(ratingTarget.id, sessionId);
+    else
+      await deleteTVShowRating(ratingTarget.id, sessionId);
+  } finally {
+    closeRateModal();
+  }
+};
   const [filters, setFilters]       = useState({});
   const [sortOption, setSortOption] = useState(() => {
     if (preset === 'trending') return 'trending';
@@ -105,6 +116,14 @@ const closeRateModal = () => {
   setTempRating(0);
   setRatingTarget(null);
 };
+const clearRatingForShow = async tvId => {
+  try {
+    await deleteTVShowRating(tvId, sessionId);   
+    setRatingLocal(tvId, "tv", 0);              
+  } catch (err) {
+    console.error("Failed to clear rating:", err);
+  }
+};
 
 const submitRating = async value => {
   if (!ratingTarget) return;
@@ -121,17 +140,6 @@ const submitRating = async value => {
   }
 };
 
-const clearRating = async () => {
-  if (!ratingTarget) return;
-  try {
-    if (ratingTarget.type === 'movie')
-      await deleteMovieRating(ratingTarget.id, sessionId);
-    else
-      await deleteTVShowRating(ratingTarget.id, sessionId);
-  } finally {
-    closeRateModal();
-  }
-};
 const handleFavoriteToggle = async tvId => {
   if (!isAuthenticated || !sessionId) return login();  
 
@@ -371,16 +379,14 @@ const handleFavoriteToggle = async tvId => {
                     {menuOpenFor===s.id && (
                       <div className="absolute right-2 top-[calc(100%_-_48px)] z-20">
                         <MovieCardMenu
-                          onRate={() =>
-                            openRateModal(
-                              s.id,                    
-                              s.title,
-                              'tv',        
-                              s.myRating                             
-                            )
-                          }
-                          onFavorite={() => handleFavoriteToggle(s.id)}
                           mediaType="tv"
+                                            
+                          currentRating={s.myRating}
+                          onRate={() => openRateModal(s.id, s.title, "tv", s.myRating)}
+                          onClearRating={() => clearRatingForShow(s.id)}
+                                            
+                          isFavorite={s.isFavorite}
+                          onFavorite={() => handleFavoriteToggle(s.id)}
                           
                         />
                       </div>
@@ -402,6 +408,7 @@ const handleFavoriteToggle = async tvId => {
                     mediaType="tv"
                     mediaId={s.id}
                     bookmarked={s.bookmarked}
+                    onClearRating={() => clearRatingForMovie(m.id)}  
                     isLoading={s.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
                     onFavorite={() => handleFavoriteToggle(s.id)}
