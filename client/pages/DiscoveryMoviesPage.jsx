@@ -383,7 +383,7 @@ const openListModal = id => setListTargetId(id);
                                sessionId,
                                m.id,
                                "movie",
-                               accountStates[`movie_${m.id}`]?.favorite || false
+                               m.isFavorite
                              )
                            }
                           mediaType="movie"
@@ -415,7 +415,7 @@ const openListModal = id => setListTargetId(id);
                          sessionId,
                          m.id,
                          "movie",
-                         accountStates[`movie_${m.id}`]?.favorite || false
+                         m.isFavorite
                        )
                      }
                     onAddToList={() => openListModal(m.id)}
