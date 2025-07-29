@@ -1,3 +1,4 @@
+// src/components/MovieCard.jsx
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
@@ -9,20 +10,29 @@ import Bookmarked from '../assets/Bookmarked.svg?url';
 import NoImageFound from '../assets/no-image-found.png';
 
 export default function MovieCard({
-  mediaType, mediaId,
-  title: propTitle, poster: propPoster,
-  voteAverage: propVoteAverage, year: propYear,
-  runtime: propRuntime, certification: propCertification,
-  bookmarked = false, isLoading = false,
-  showBookmark = true, showDeleteButton = false,
+  mediaType,
+  mediaId,
+  title: propTitle,
+  poster: propPoster,
+  voteAverage: propVoteAverage,
+  year: propYear,
+  runtime: propRuntime,
+  certification: propCertification,
+  bookmarked = false,
+  isLoading = false,
+  showBookmark = true,
+  showDeleteButton = false,
   deleteLoading = false,
-  onBookmarkToggle, onMenuClick, onDelete,
+  onBookmarkToggle,
+  onMenuClick,
+  onDelete,
   className = '',
 }) {
   const navigate = useNavigate();
   const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
   const [details, setDetails] = useState(null);
 
+  // Nur fetchen, wenn kein propTitle gegeben wurde
   const useFetch = !propTitle;
 
   useEffect(() => {
@@ -42,29 +52,35 @@ export default function MovieCard({
   if (useFetch && !details) return null;
 
   // resolve data
-  const title = propTitle || details.title || details.name;
-  const poster = propPoster ||
-    (details.poster_path && getPosterUrl(details.poster_path, 'w500')) ||
-    NoImageFound;
+  const title = propTitle || details?.title || details?.name || 'No title';
+  const poster = propPoster != null
+    ? propPoster
+    : details?.poster_path
+      ? getPosterUrl(details.poster_path, 'w500')
+      : NoImageFound;
+
   const voteAverage = propVoteAverage != null
     ? propVoteAverage
-    : (details.vote_average || 0);
+    : (details?.vote_average || 0);
+
   const year = propYear != null
     ? propYear
     : (() => {
-        const d = details.release_date || details.first_air_date;
+        const d = details?.release_date || details?.first_air_date;
         return d ? new Date(d).getFullYear() : null;
       })();
+
   const runtime = propRuntime != null
     ? propRuntime
     : (() => {
         const mins = mediaType === 'movie'
-          ? details.runtime
-          : (details.episode_run_time?.[0] || 0);
-        return mins ? `${Math.floor(mins/60)}h ${mins%60}m` : null;
+          ? details?.runtime
+          : (details?.episode_run_time?.[0] || 0);
+        return mins ? `${Math.floor(mins / 60)}h ${mins % 60}m` : null;
       })();
-  const certification = propCertification || (details.adult ? '18+' : null);
-  const certFixed = certification?.replace('-', '‑') ?? null;
+
+  const certification = propCertification || (details?.adult ? '18+' : null);
+  const certFixed = certification?.replace('-', '-') ?? null;
 
   // handlers
   const handleCardClick = () => navigate(`/${mediaType}/${mediaId}`);
