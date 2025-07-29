@@ -126,7 +126,7 @@ export default function CreditsListItem({
   return (
     <div className="relative bg-[#141414] border border-gray-700 rounded-2xl p-4 flex gap-6">
       {/* Poster */}
-      <div className="flex-shrink-0 rounded-2xl overflow-hidden w-[100px]">
+      <div className="flex-shrink-0 rounded-2xl overflow-hidden w-[150px]">
         <Link to={`/${type}/${id}`}>
           <img
             src={details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : NoImageFound}
