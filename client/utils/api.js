@@ -297,6 +297,13 @@ export const getTVShowDetailsWithLanguage = (tvId, language = 'en-US') =>
     params: { append_to_response: 'external_ids' },
   });
 
+export const getSeasonDetailsWithLanguage = (
+  tvId,
+  seasonNumber,
+  language = 'en-US'
+) =>
+  apiWithLanguage(language).get(`/tv/${tvId}/season/${seasonNumber}`);
+
 export const getTVShowWatchProviders = (tvId) =>
   api.get(`/tv/${tvId}/watch/providers`);
 

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { getTVShowDetails, getSeasonDetails } from '../utils/api';
+import {
+  getTVShowDetailsWithLanguage,
+  getSeasonDetailsWithLanguage,
+} from '../utils/api';
+import { useLanguage } from '../contexts/LanguageContext';
 import SeasonListComponent from '../components/SeasonListComponent';
 import RatingModal from '../components/MovieSeriesPage/RatingModal';
 import { useAuth } from '../contexts/AuthContext';  // adjust path if needed
@@ -9,7 +13,7 @@ import { useAuth } from '../contexts/AuthContext';  // adjust path if needed
 export default function SeasonPage() {
   const { tvId, seasonNumber } = useParams();
   const navigate = useNavigate();
-
+  const { language } = useLanguage(); 
   const [show, setShow] = useState(null);
   const [season, setSeason] = useState(null);
 
@@ -23,11 +27,12 @@ export default function SeasonPage() {
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // fetch show backdrop & name
-    getTVShowDetails(tvId).then(res => setShow(res.data));
-    // fetch this season’s info & episodes
-    getSeasonDetails(tvId, seasonNumber).then(res => setSeason(res.data));
-  }, [tvId, seasonNumber]);
+    getTVShowDetailsWithLanguage(tvId, language)
+      .then(res => setShow(res.data));
+
+    getSeasonDetailsWithLanguage(tvId, seasonNumber, language)
+      .then(res => setSeason(res.data));
+  }, [tvId, seasonNumber, language]);
 
   if (!show || !season) {
     return (
