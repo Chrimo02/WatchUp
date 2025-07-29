@@ -74,19 +74,23 @@ export function PersonProvider({ children }) {
   }, []);
 
   // Memoized Bio-Lader für Listenansicht, cacht Bio pro ID
-  const fetchPersonBio = useCallback(async (personId) => {
-    if (bioCache[personId]) {
-      return bioCache[personId];
-    }
-    try {
-      const res = await getPersonDetails(personId);
-      const bio = res.data?.biography || '';
-      setBioCache(prev => ({ ...prev, [personId]: bio }));
-      return bio;
-    } catch {
-      setBioCache(prev => ({ ...prev, [personId]: '' }));
-      return '';
-    }
+     const fetchPersonBio = useCallback(
+      async (personId, language = 'en-US') => {
+        const cacheKey = `${personId}_${language}`;
+
+        if (bioCache[cacheKey]) {
+          return bioCache[cacheKey];
+        }
+
+        try {
+          const res = await getPersonDetails(personId, language);
+          const bio = res.data?.biography || '';
+          setBioCache(prev => ({ ...prev, [cacheKey]: bio }));
+          return bio;
+        } catch {
+          setBioCache(prev => ({ ...prev, [cacheKey]: '' }));
+          return '';
+        }
   }, [bioCache]);
 
   // useCallback für Referenzgleichheit!
