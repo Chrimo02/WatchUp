@@ -12,7 +12,7 @@ import LanguageSelector from './LanguageSelector'
 export default function Navbar() {
   const { isAuthenticated, user, login, logout } = useAuth()
   const [searchValue, setSearchValue] = useState('')
-  const [menuOpen,    setMenuOpen]    = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [notification, setNotification] = useState({
     show: false,
@@ -20,7 +20,8 @@ export default function Navbar() {
     type: 'success',
   })
   const prevAuth = useRef(isAuthenticated)
-  const menuRef  = useRef(null)
+  const menuRef = useRef(null)
+  const mobileNavRef = useRef(null)
   const navigate = useNavigate()
 
   const showNotification = (msg, type = 'success') => {
@@ -37,7 +38,11 @@ export default function Navbar() {
 
   useEffect(() => {
     const onClickOutside = e => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      // Nur schließen, wenn Klick weder im Profil-Dropdown noch im Mobile-Nav war
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        mobileNavRef.current && !mobileNavRef.current.contains(e.target)
+      ) {
         setMenuOpen(false)
         setMobileNavOpen(false)
       }
@@ -77,10 +82,10 @@ export default function Navbar() {
   const handleShuffle = async () => {
     try {
       const { data: first } = await getMovies.popular(1)
-      const totalPages      = Math.min(first.total_pages || 1, 500)
-      const randomPage      = Math.floor(Math.random() * totalPages) + 1
-      const { data }        = await getMovies.popular(randomPage)
-      const list            = data.results || []
+      const totalPages = Math.min(first.total_pages || 1, 500)
+      const randomPage = Math.floor(Math.random() * totalPages) + 1
+      const { data } = await getMovies.popular(randomPage)
+      const list = data.results || []
       if (!list.length) {
         showNotification('No popular movies available to shuffle.', 'error')
         return
@@ -191,7 +196,7 @@ export default function Navbar() {
                   <li>
                     <Link
                       to="/my-lists"
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => { setMenuOpen(false); setMobileNavOpen(false); }}
                       className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg"
                     >
                       My Lists
@@ -214,7 +219,7 @@ export default function Navbar() {
 
       {/* Mobile nav dropdown */}
       {mobileNavOpen && (
-        <div className="lg:hidden bg-red-700 px-4 py-2 space-y-1">
+        <div ref={mobileNavRef} className="lg:hidden bg-red-700 px-4 py-2 space-y-1">
           <Link
             to="/discover"
             onClick={() => setMobileNavOpen(false)}
