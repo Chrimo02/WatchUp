@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
-import { Loader2, ArrowLeft, MoreHorizontal, Trash2, Edit3, X } from "lucide-react"
-import { getListDetails, deleteList, removeMovieFromList, getPosterUrl, editList } from "../utils/api"
+import { Loader2, ArrowLeft, MoreHorizontal, Trash2, X } from "lucide-react"
+import { getListDetails, deleteList, removeMovieFromList, getPosterUrl } from "../utils/api"
 import MovieCard from "../components/MovieCard"
 import { useMovies } from "../contexts/MovieContext"
 import { toast } from "sonner"
@@ -22,14 +22,6 @@ const ListDetailsPage = () => {
   const [deletingList, setDeletingList] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState({})
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-
-  // Edit form state
-  const [editForm, setEditForm] = useState({
-    name: "",
-    description: "",
-  })
-  const [editLoading, setEditLoading] = useState(false)
 
   // Bookmark states for watchlist functionality
   const [bookmarkStates, setBookmarkStates] = useState({})
@@ -50,12 +42,6 @@ const ListDetailsPage = () => {
     try {
       const response = await getListDetails(listId, sessionId)
       setListDetails(response.data)
-
-      // Set edit form with current values
-      setEditForm({
-        name: response.data.name || "",
-        description: response.data.description || "",
-      })
 
       // Initialize bookmark states for all items
       if (response.data.items) {
@@ -164,93 +150,6 @@ const ListDetailsPage = () => {
       setDeletingList(false)
       setShowDeleteConfirm(false)
     }
-  }
-
-  const handleEditList = async () => {
-    if (!editForm.name.trim()) {
-      toast.error("List name is required")
-      return
-    }
-
-    setEditLoading(true)
-
-    try {
-      console.log("Attempting to edit list:", {
-        listId,
-        sessionId,
-        name: editForm.name.trim(),
-        description: editForm.description.trim(),
-      })
-
-      // Check if editList function exists
-      if (typeof editList !== "function") {
-        throw new Error("editList function is not available. Please check your API imports.")
-      }
-
-      // Call the TMDB API to update the list
-      const response = await editList(listId, sessionId, editForm.name.trim(), editForm.description.trim())
-
-      console.log("Edit list response:", response)
-
-      // Update local state with the new values
-      const updatedName = editForm.name.trim()
-      const updatedDescription = editForm.description.trim()
-
-      setListDetails((prev) => ({
-        ...prev,
-        name: updatedName,
-        description: updatedDescription,
-      }))
-
-      toast.success("List updated successfully!")
-      setShowEditModal(false)
-    } catch (err) {
-      console.error("Failed to edit list:", err)
-      console.error("Error details:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      })
-
-      // Check if it's a specific API error
-      if (err.message?.includes("editList function is not available")) {
-        toast.error("Edit function not available. Please check the API setup.")
-      } else if (err.response?.status === 404) {
-        toast.error("List not found or you don't have permission to edit it.")
-      } else if (err.response?.status === 401) {
-        toast.error("Authentication failed. Please try logging in again.")
-      } else if (err.response?.status === 400) {
-        toast.error("Invalid request. Please check your input.")
-      } else if (err.response?.data?.status_message) {
-        toast.error(`Failed to update list: ${err.response.data.status_message}`)
-      } else if (err.message) {
-        toast.error(`Error: ${err.message}`)
-      } else {
-        toast.error("Failed to update list. Please try again.")
-      }
-
-      // Keep the modal open on error so user can try again
-    } finally {
-      setEditLoading(false)
-    }
-  }
-
-  const openEditModal = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    console.log("Opening edit modal")
-    setShowEditModal(true)
-    setShowMenu(false)
-  }
-
-  const closeEditModal = () => {
-    console.log("Closing edit modal")
-    setShowEditModal(false)
-    // Reset form to original values only when explicitly closing
-    setEditForm({
-      name: listDetails?.name || "",
-      description: listDetails?.description || "",
-    })
   }
 
   const confirmDeleteList = (e) => {
@@ -372,13 +271,6 @@ const ListDetailsPage = () => {
                 <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] border border-gray-700 rounded-lg shadow-xl z-50">
                   <div className="py-1">
                     <button
-                      onClick={openEditModal}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-gray-700 transition-colors text-left"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      Edit List
-                    </button>
-                    <button
                       onClick={confirmDeleteList}
                       disabled={deletingList}
                       className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-gray-700 transition-colors disabled:opacity-50 text-left"
@@ -435,94 +327,6 @@ const ListDetailsPage = () => {
           </div>
         )}
       </div>
-
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4">
-          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md border border-gray-700 shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
-              <h2 className="text-xl font-bold text-white">Edit List</h2>
-              <button
-                onClick={closeEditModal}
-                disabled={editLoading}
-                className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <div className="p-6">
-              <div className="space-y-4">
-                {/* List Name */}
-                <div>
-                  <label htmlFor="editListName" className="block text-sm font-medium text-white mb-2">
-                    List Name *
-                  </label>
-                  <input
-                    id="editListName"
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter list name"
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                    disabled={editLoading}
-                    maxLength={50}
-                  />
-                  <div className="text-xs text-gray-400 mt-1">{editForm.name.length}/50 characters</div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label htmlFor="editListDescription" className="block text-sm font-medium text-white mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    id="editListDescription"
-                    value={editForm.description}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter list description"
-                    rows={3}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none"
-                    disabled={editLoading}
-                    maxLength={200}
-                  />
-                  <div className="text-xs text-gray-400 mt-1">{editForm.description.length}/200 characters</div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={closeEditModal}
-                  disabled={editLoading}
-                  className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEditList}
-                  disabled={editLoading || !editForm.name.trim()}
-                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {editLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Edit3 className="w-4 h-4" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

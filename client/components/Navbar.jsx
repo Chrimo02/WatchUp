@@ -63,7 +63,10 @@ export default function Navbar() {
 
   const handleWatchlistClick = () => {
     if (isAuthenticated) {
-      navigate('/my-lists/watchlist')
+      navigate('/my-lists', {
+        state: { initialView: 'watchlist' }
+      })
+
       setMobileNavOpen(false)
     } else {
       showNotification(

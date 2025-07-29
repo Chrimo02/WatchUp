@@ -1,9 +1,9 @@
 "use client"
-
+import ThisListIsEmpty from "../assets/ThisListIsEmpty.png"
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { Bookmark, Heart, Star, Plus, Loader2, ArrowLeft, Filter } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import {
   getFavoriteMovies,
   getFavoriteTVShows,
@@ -30,11 +30,13 @@ const MyListsPage = () => {
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
+  const { state } = useLocation()
   const [error, setError] = useState(null)
+  
   const [showCreateModal, setShowCreateModal] = useState(false)
-
+  const initial = state?.initialView ?? 'overview'
   // View state
-  const [currentView, setCurrentView] = useState("overview") // 'overview', 'watchlist', 'favorites', 'rated'
+  const [currentView, setCurrentView] = useState(initial) // 'overview', 'watchlist', 'favorites', 'rated'
   const [activeFilter, setActiveFilter] = useState("all") // 'all', 'movies', 'tv'
 
   // Loading states for individual lists
@@ -754,11 +756,11 @@ const MyListsPage = () => {
               <div className="relative w-full h-80 rounded-lg overflow-hidden">
                 {/* Background Image */}
                 <img
-                  src={list.posterUrl || "/placeholder.svg?height=480&width=320"}
+                  src={list.posterUrl || ThisListIsEmpty}
                   alt={list.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = "/placeholder.svg?height=480&width=320"
+                    e.target.src = ThisListIsEmpty
                   }}
                 />
 
@@ -805,11 +807,11 @@ const MyListsPage = () => {
                   <div className="relative w-full h-64 rounded-lg overflow-hidden">
                     {/* Background Image */}
                     <img
-                      src={list.posterUrl || "/placeholder.svg?height=384&width=256"}
+                      src={list.posterUrl || ThisListIsEmpty}
                       alt={list.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = "/placeholder.svg?height=384&width=256"
+                        e.target.src = ThisListIsEmpty
                       }}
                     />
 
