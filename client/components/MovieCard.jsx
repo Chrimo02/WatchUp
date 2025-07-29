@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { Star, MoreHorizontal } from "lucide-react";
+import { Star, MoreHorizontal, Trash2} from "lucide-react";
 import AddToBookmark from "../assets/AddToBookmark.svg";
 import Bookmarked from "../assets/Bookmarked.svg";
 import NoImageFound from "../assets/no-image-found.png";
@@ -19,7 +19,12 @@ export default function MovieCard({
   isLoading  = false,
   onBookmarkToggle,
   onMenuClick,
-  className  = "",
+  onDelete,
+  className = '',
+  showBookmark = true, // New prop to control bookmark visibility
+  showDeleteButton = false,
+  deleteLoading = false,
+
 }) {
   const handleBookmarkClick = e => {
     e.preventDefault();
@@ -36,6 +41,12 @@ export default function MovieCard({
     }
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation()
+    if (!deleteLoading && onDelete) {
+      onDelete(mediaId, mediaType)
+    }
+  }
   const ratingFixed = certification ? certification.replace('-', '‑') : '';
 
   return (
@@ -53,7 +64,7 @@ export default function MovieCard({
           />
         </Link>
 
-        {/* Bookmark */}
+
         <button
           type="button"
           onClick={handleBookmarkClick}
@@ -75,6 +86,7 @@ export default function MovieCard({
             />
           )}
         </button>
+        )}
 
         {/* Score */}
         <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
@@ -103,7 +115,29 @@ export default function MovieCard({
           </div>
         </div>
 
-        {onMenuClick && (
+        {/* Show delete button or menu button based on props */}
+        {showDeleteButton ? (
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            disabled={deleteLoading}
+            className={`
+              p-1 rounded-full transition-colors
+              ${
+                deleteLoading
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }
+            `}
+            title="Remove from list"
+          >
+            {deleteLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Trash2 className="w-5 h-5" />
+            )}
+          </button>
+        ) : onMenuClick ? (
           <button
             type="button"
             onClick={handleMenuClick}
@@ -111,7 +145,7 @@ export default function MovieCard({
           >
             <MoreHorizontal className="w-5 h-5" />
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -130,5 +164,10 @@ MovieCard.propTypes = {
   isLoading:     PropTypes.bool,
   onBookmarkToggle: PropTypes.func,
   onMenuClick:      PropTypes.func,
-  className:     PropTypes.string,
+  onDelete:         PropTypes.func,
+  className:        PropTypes.string,
+  showBookmark:     PropTypes.bool,
+  showDeleteButton: PropTypes.bool,
+  deleteLoading:    PropTypes.bool,
 };
+

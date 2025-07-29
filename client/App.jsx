@@ -12,6 +12,7 @@ import DiscoveryPage from "./pages/DiscoveryPage.jsx";
 import SearchResultsPage from "./pages/SearchResultsPage.jsx";
 import ComponentTestPage from "./pages/ComponentTestPage.jsx";
 import SeasonPage from "./pages/SeasonPage.jsx";
+import ListDetailsPage from "./pages/ListDetailsPage"
 
 import { useAuth } from './contexts/AuthContext';
 
@@ -39,6 +40,7 @@ function App() {
             <Route path="component-test" element={<ComponentTestPage />} />
             <Route path="discover" element={<DiscoveryPage />} />
             <Route path="series/:tvId/season/:seasonNumber" element={<SeasonPage />} />
+            <Route path="/list/:listId" element={<ListDetailsPage />} />
           </Route>
         </Routes>
   );
