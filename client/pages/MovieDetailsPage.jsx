@@ -499,8 +499,6 @@ const MovieDetailsPage = () => {
         mediaId={movie.id}
         mediaType="movie"
         onAdded={(listId) => {
-          // optional: refetch lists or update local state
-          showNotification("Added to your list!");
           setShowAddToListModal(false);
         }}
       />
