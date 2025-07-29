@@ -21,6 +21,7 @@ import {
   getMovieAccountStates,
   getTVShowAccountStates,
   getBatchAccountStates,
+  markAsFavorite, 
 } from '../utils/api';
 
 const MovieContext = createContext({});
@@ -174,6 +175,29 @@ export const MovieProvider = ({ children }) => {
       return true;
     } catch (err) {
       console.error('Failed to toggle watchlist:', err);
+      throw err;
+    }
+  };
+
+  const toggleFavorite = async (
+    accountId,
+    sessionId,
+    mediaId,
+    mediaType,          // "movie" | "tv"
+    isCurrentlyFavorite // boolean
+  ) => {
+    try {
+      const shouldAdd = !isCurrentlyFavorite;
+      await markAsFavorite(accountId, sessionId, mediaId, mediaType, shouldAdd);
+
+      const key = getCacheKey(mediaId, mediaType);
+      setAccountStates(prev => ({
+        ...prev,
+        [key]: { ...(prev[key] ?? {}), favorite: shouldAdd },
+      }));
+      return true;
+    } catch (err) {
+      console.error("Failed to toggle favorite:", err);
       throw err;
     }
   };
@@ -446,6 +470,7 @@ export const MovieProvider = ({ children }) => {
         getRandomMovie,
         getRandomTVShow,
         fetchUpcomingMoviesWithTrailers,
+        toggleFavorite, 
       }}
     >
       {children}

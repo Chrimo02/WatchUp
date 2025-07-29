@@ -7,7 +7,9 @@ const MovieCardMenu = ({
   onRate,
   onAddToList,
   onFavorite,
-  mediaType,          // "movie"  |  "series"
+  mediaType, 
+  isFavorite = false,
+  currentRating = 0,      
 }) => (
   <div
     className={cn(
@@ -21,22 +23,29 @@ const MovieCardMenu = ({
         onClick={onRate}
         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
       >
-        <div className="w-5 flex justify-center">
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 21 21"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M10.5 2L13.09 7.26L19 8.27L14.75 12.14L15.68 18.02L10.5 15.77L5.32 18.02L6.25 12.14L2 8.27L7.91 7.26L10.5 2Z"
-              fill="#CCCCCC"
-            />
-          </svg>
-        </div>
-        <span className="text-[#CCC] text-[14px] font-poppins">Rate</span>
+     <div className="w-5 flex justify-center">
+      {isFavorite ? (
+        /* filled heart */
+        <svg width="18" height="15" viewBox="0 0 18 15" fill="#e11d48">
+          <path d="M10 15L8.84 13.92C4.72 10.1 2 7.58 2 4.5 …"/>
+        </svg>
+      ) : (
+        /* outline */
+        <svg width="18" height="15" viewBox="0 0 18 15" fill="none" stroke="#ccc">
+          <path d="M10 15L8.84 13.92C4.72 10.1 2 7.58 2 4.5 …"/>
+        </svg>
+      )}
+    </div>
+    <span className="text-[#CCC] text-[14px] font-poppins">
+      {isFavorite ? "Unfavorite" : "Favorite"}
+    </span>
       </button>
+      +
+  {currentRating > 0 && (
+    <div className="self-end mt-1 text-xs text-[#f5c518]">
+      You rated {currentRating}/10
+    </div>
+  )}
 
       {/* ── Add to List (nur bei Filmen) ───────────── */}
       {mediaType === "movie" && (

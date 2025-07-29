@@ -39,7 +39,8 @@ export default function DiscoveryMoviesPage() {
    getBatchAccountStates,
    isInWatchlist,
    accountStates,          
-   setRatingLocal,         
+   setRatingLocal,        
+   toggleFavorite,  
  } = useMovies();
 
   const { isAuthenticated, user, sessionId, login } = useAuth();
@@ -116,31 +117,6 @@ const openListModal = id => setListTargetId(id);
       closeRateModal();
     }
   };
-const handleFavoriteToggle = async movieId => {
-  if (!isAuthenticated || !sessionId) return login();   // asks the user to log‑in
-
-  // optimistic UI‑update
-  setMovies(prev =>
-    prev.map(m => m.id === movieId ? { ...m, favorite: !m.favorite } : m)
-  );
-
-  try {
-    const movie = movies.find(m => m.id === movieId);
-    await markAsFavorite(
-      user.id,
-      sessionId,
-      movieId,
-      "movie",
-      !movie.favorite            // ← new desired state
-    );
-  } catch (err) {
-    console.error("Failed to toggle favourite:", err);
-    // rollback on error
-    setMovies(prev =>
-      prev.map(m => m.id === movieId ? { ...m, favorite: !m.favorite } : m)
-    );
-  }
-};
 
   const fetchPage = useCallback(async (p) => {
     if (loadingPage || fetchedPages.current.has(p) || !hasMore) return;
@@ -235,16 +211,12 @@ const handleFavoriteToggle = async movieId => {
         });
       }
 
-      // Merge into main movie list
       setMovies(prev => {
         const map = new Map(prev.map(m => [m.id, m]));
-        enriched.forEach(m => {
-  const fav = batchStates?.[`movie_${m.id}`]?.favorite ?? false;
-  map.set(m.id, { ...m, favorite: fav });
-});
-
+        enriched.forEach(m => map.set(m.id, m));   // keep only API fields
         return Array.from(map.values());
       });
+
       setTotal(total);
       setProviders(prev => ({ ...prev, ...Object.fromEntries(provPairs) }));
     } catch (err) {
@@ -306,8 +278,8 @@ const handleFavoriteToggle = async movieId => {
   const headerText = sortOption === 'trending' ? 'Trending Movies' : 'Discover Movies';
   const movieItems = movies.map(m => ({
     id: m.id,
-    isFavorite: m.favorite,
-    myRating: accountStates[`movie_${m.id}`]?.rated?.value ?? 0,
+    isFavorite: accountStates[`movie_${m.id}`]?.favorite || false,
+    myRating:   accountStates[`movie_${m.id}`]?.rated?.value ?? 0,
     title: m.title,
     poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
     year: m.release_date?.slice(0,4),
@@ -403,8 +375,17 @@ const handleFavoriteToggle = async movieId => {
                             )
                           }
                           onAddToList= {() => openListModal(m.id)}
-                            
-                           onFavorite={() => handleFavoriteToggle(m.id)}
+                           isFavorite={m.isFavorite}
+                          currentRating={m.myRating}
+                          onFavorite={() =>
+                             toggleFavorite(
+                               user.id,
+                               sessionId,
+                               m.id,
+                               "movie",
+                               accountStates[`movie_${m.id}`]?.favorite || false
+                             )
+                           }
                           mediaType="movie"
                         />
                       </div>
@@ -428,7 +409,15 @@ const handleFavoriteToggle = async movieId => {
                     bookmarked={m.bookmarked}
                     isLoading={m.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
-                    onFavorite={() => handleFavoriteToggle(m.id)}
+                    onFavorite={() =>
+                       toggleFavorite(
+                         user.id,
+                         sessionId,
+                         m.id,
+                         "movie",
+                         accountStates[`movie_${m.id}`]?.favorite || false
+                       )
+                     }
                     onAddToList={() => openListModal(m.id)}
                     onRate={val => rateMovie(m.id, sessionId, val)}
                     streamingPlatforms={[
