@@ -13,6 +13,8 @@ export default function PersonListItem({ person }) {
 
   useEffect(() => {
     let mounted = true;
+    
+    
     async function loadBio() {
       const b = await fetchPersonBio(person.id, language);
       if (mounted) setBio(b?.trim() ? b : 'Sorry, no bio available for this person.');
