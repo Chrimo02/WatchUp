@@ -102,7 +102,7 @@ const fetchPage = useCallback(async (p) => {
 
     if (sortOption === 'trending') {
       if (p > 1) { setHasMore(false); return }        // trending only has 1 page
-      const { data } = await getMovies.trending()
+      const { data } = await getMovies.trending()        
       raw   = data.results
       total = data.results.length
     } else {
@@ -180,7 +180,7 @@ const fetchPage = useCallback(async (p) => {
 
   /* reset list on filter/sort change */
   useEffect(()=>{
-    setMovies([]); setProviders({}); setPage(1); setHasMore(true)
+    setMovies([]); setProviders({}); setPage(1); setHasMore(true); fetchedPages.current.clear()    
   },[sortOption,filters,preset,region,language])
 
   /* trigger load for current page */
@@ -279,8 +279,8 @@ const fetchPage = useCallback(async (p) => {
 
         {/* GRID view ------------------------------------------------ */}
         {viewMode === 'grid' && (
-          movies.length === 0
-            ? <p className="text-center text-gray-400 py-10">No movies found.</p>
+          movies.length === 0 && !loadingPage
+          ? <p className="text-center text-gray-400 py-10">No movies found.</p>
             : (
               <div
                 ref={gridRef}
