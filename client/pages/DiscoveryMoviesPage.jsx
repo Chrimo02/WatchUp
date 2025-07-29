@@ -299,6 +299,7 @@ export default function DiscoveryMoviesPage() {
                             addToWatchlist(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
                           onFavorite={() =>
                             markAsFavorite(user.id, sessionId, m.id, 'movie', !isInWatchlist(m.id, 'movie'))}
+                          mediaType="movie"
                         />
                       </div>
                     )}

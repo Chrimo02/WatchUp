@@ -303,6 +303,7 @@ export default function DiscoverySeriesPage() {
                           onRate={rating=>rateTVShow(s.id,sessionId,rating)}
                           onAddToList={()=>addToWatchlist(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
                           onFavorite={()=>markAsFavorite(user.id,sessionId,s.id,'tv',!isInWatchlist(s.id,'tv'))}
+                          mediaType="tv"
                         />
                       </div>
                     )}
