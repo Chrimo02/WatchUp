@@ -1,5 +1,6 @@
 // CastSlider.jsx
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom' 
 
 export default function CastSlider({ cast = [] }) {
   const [captionHeight, setCaptionHeight] = useState(0)
@@ -49,7 +50,6 @@ export default function CastSlider({ cast = [] }) {
     const c = sliderRef.current
     if (!c) return
     c.addEventListener('scroll', updateFade)
-    // initialize
     updateFade()
     return () => c.removeEventListener('scroll', updateFade)
   }, [cast])
@@ -62,30 +62,37 @@ export default function CastSlider({ cast = [] }) {
         className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
       >
         {cast.map((c, i) => (
-          <div
-            key={i}
-            className="flex-none bg-[#181818] rounded-lg overflow-hidden shadow-md border border-[#3d3d3d]"
+           <Link                      
+            key={c.id}
+            to={`/person/${c.id}`}
+            className="flex-none"
             style={{ width: '9rem' }}
           >
-            <img
-              src={c.img}
-              alt={c.name}
-              className="w-full h-[14rem] object-cover"
-            />
             <div
-              className="caption bg-[#2A2A2A] text-white px-3 py-2 text-left"
-              style={{
-                height: captionHeight ? `${captionHeight}px` : 'auto',
-              }}
+              key={i}
+              className="flex-none bg-[#181818] rounded-lg overflow-hidden shadow-md border border-[#3d3d3d]"
+              style={{ width: '9rem' }}
             >
-              <div className="font-bold text-[14px] leading-[20px]">
-                {c.name}
-              </div>
-              <div className="text-sm text-gray-300 mt-1">
-                {c.role}
+              <img
+                src={c.img}
+                alt={c.name}
+                className="w-full h-[14rem] object-cover"
+              />
+              <div
+                className="caption bg-[#2A2A2A] text-white px-3 py-2 text-left"
+                style={{
+                  height: captionHeight ? `${captionHeight}px` : 'auto',
+                }}
+              >
+                <div className="font-bold text-[14px] leading-[20px]">
+                  {c.name}
+                </div>
+                <div className="text-sm text-gray-300 mt-1">
+                  {c.role}
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

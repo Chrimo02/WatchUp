@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
+import SeasonsList from '../components/SeasonsList';
+import PLACEHOLDER from '../assets/placeholder-profile.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
@@ -125,11 +127,12 @@ const SeriesDetailsPage = () => {
         setCredits(cred);
         setFormattedCast(
           (cred.cast || []).map(m => ({
+            id: m.id,
             name: m.name,
             role: m.character,
             img: m.profile_path
               ? `${posterSizes.medium}${m.profile_path}`
-              : 'https://via.placeholder.com/150x225?text=No+Image'
+              : PLACEHOLDER
           }))
         );
 
@@ -323,7 +326,10 @@ const SeriesDetailsPage = () => {
             keywords={keywords.map(k => k.name)}
           />
           </div>
-      <section>
+<SeasonsList tvId={showData.id} seasons={showData.seasons} />
+
+      <section className="mt-5">
+        
         <MovieSlider
           title="Similar Series"
           movieItems={transformTVShowData(similarShows)}

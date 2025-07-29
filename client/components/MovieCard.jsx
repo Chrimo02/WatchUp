@@ -1,15 +1,20 @@
-// src/components/MovieCard.jsx
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useMovies } from '../contexts/MovieContext';
-import { getPosterUrl } from '../utils/api';
-import { Star, MoreHorizontal, Trash2} from 'lucide-react';
-import AddToBookmark from '../assets/AddToBookmark.svg?url';
-import Bookmarked      from '../assets/Bookmarked.svg?url';
+import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
+import { Star, MoreHorizontal, Trash2} from "lucide-react";
+import AddToBookmark from "../assets/AddToBookmark.svg";
+import Bookmarked from "../assets/Bookmarked.svg";
+import NoImageFound from "../assets/no-image-found.png";
 
 export default function MovieCard({
-  mediaType,
-  mediaId,
+  id,
+  mediaType,           // "movie" | "tv"
+  title,
+  poster,
+  voteAverage,         // number (0‑10)
+  year,                // string | number
+  runtime,             // string like "1h 58m"  (optional)
+  certification,       // "PG‑13", "12", "NR" … (optional)
   bookmarked = false,
   isLoading  = false,
   onBookmarkToggle,
@@ -19,43 +24,21 @@ export default function MovieCard({
   showBookmark = true, // New prop to control bookmark visibility
   showDeleteButton = false,
   deleteLoading = false,
+
 }) {
-  const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
-  const [details, setDetails] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = mediaType === 'movie'
-          ? await fetchMovieDetails(mediaId)
-          : await fetchTVShowDetails(mediaId);
-        setDetails(res);
-      } catch (err) {
-        console.error('Error loading details', err);
-      }
-    })();
-  }, [mediaType, mediaId, fetchMovieDetails, fetchTVShowDetails]);
-
-  if (!details) return null;
-
-  const title      = details.title || details.name;
-  const date       = details.release_date || details.first_air_date;
-  const year       = date ? new Date(date).getFullYear() : '';
-  const ageRating  = details.adult ? '18+' : '13+';
-  const runtimeMin = mediaType === 'movie'
-    ? details.runtime
-    : (details.episode_run_time?.[0] || 0);
-  const runtimeStr = `${Math.floor(runtimeMin/60)}h ${runtimeMin%60}m`;
-
   const handleBookmarkClick = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isLoading) onBookmarkToggle(mediaId, mediaType);
+    if (!isLoading && onBookmarkToggle) {
+      onBookmarkToggle(id, mediaType);
+    }
   };
 
   const handleMenuClick = e => {
     e.stopPropagation();
-    onMenuClick(mediaId);
+    if (onMenuClick) {
+      onMenuClick(id);
+    }
   };
 
   const handleDeleteClick = (e) => {
@@ -64,64 +47,71 @@ export default function MovieCard({
       onDelete(mediaId, mediaType)
     }
   }
+  const ratingFixed = certification ? certification.replace('-', '‑') : '';
 
   return (
     <div className={`
-        relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
-        ${className}
-      `}>
-      {/* Poster + Overlays */}
+      relative flex flex-col bg-[#141414] border border-gray-700 rounded-2xl overflow-hidden
+      ${className}
+    `}>
+      {/* Poster */}
       <div className="relative w-full flex-shrink-0 aspect-[2/3]">
-        <img
-          src={getPosterUrl(details.poster_path, 'w500')}
-          alt={title}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <Link to={`/${mediaType}/${id}`} className="absolute inset-0 z-0">
+          <img
+            src={poster || NoImageFound}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </Link>
 
-        {/* Bookmark als echtes <button> */}
-        {showBookmark && (
+
         <button
           type="button"
           onClick={handleBookmarkClick}
           className={`
-            absolute top-[-1px] left-3
-            w-[34px] h-[45px] z-10
+            absolute top-[-1px] left-3 w-[34px] h-[45px] z-10
             ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
             transition-transform ease-out
           `}
         >
-          {isLoading
-            ? <div className="w-full h-full flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-              </div>
-            : <img
-                src={bookmarked ? Bookmarked : AddToBookmark}
-                alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
-                className="w-full h-full object-contain"
-              />
-          }
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <img
+              src={bookmarked ? Bookmarked : AddToBookmark}
+              alt={bookmarked ? 'Bookmarked' : 'Add to Bookmark'}
+              className="w-full h-full object-contain"
+            />
+          )}
         </button>
         )}
 
         {/* Score */}
         <div className="absolute top-2 right-2 bg-black/80 rounded-xl px-2 py-1 flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-current"/>
+          <Star className="w-4 h-4 text-yellow-400 fill-current" />
           <span className="text-white font-medium text-[16px]">
-            {details.vote_average.toFixed(1)}
+            {voteAverage.toFixed(1)}
           </span>
         </div>
       </div>
 
-      {/* Text & Menu */}
+      {/* Text */}
       <div className="flex-1 bg-[#141414] px-3 py-2 flex items-center justify-between rounded-b-2xl">
         <div>
-          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight">
+          <h3 className="text-white text-sm lg:text-base font-poppins font-semibold leading-tight line-clamp-2">
             {title}
           </h3>
-          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1">
-            {year && <span>{year}</span>}<span>•</span>
-            <span>{ageRating}</span><span>•</span>
-            <span>{runtimeStr}</span>
+          {/* meta row */}
+          <div className="flex items-center text-gray-400 text-xs lg:text-sm space-x-1 mt-1 whitespace-nowrap">
+            {year && <span>{year}</span>}
+            {ratingFixed && (
+              <><span>•</span><span>{ratingFixed}</span></>
+            )}
+            {runtime && (
+              <><span>•</span><span>{runtime}</span></>
+            )}
           </div>
         </div>
 
@@ -162,10 +152,16 @@ export default function MovieCard({
 }
 
 MovieCard.propTypes = {
-  mediaType:        PropTypes.string.isRequired,
-  mediaId:          PropTypes.number.isRequired,
-  bookmarked:       PropTypes.bool,
-  isLoading:        PropTypes.bool,
+  id:            PropTypes.number.isRequired,
+  mediaType:     PropTypes.oneOf(["movie","tv"]).isRequired,
+  title:         PropTypes.string.isRequired,
+  poster:        PropTypes.string,
+  voteAverage:   PropTypes.number.isRequired,
+  year:          PropTypes.oneOfType([PropTypes.string,PropTypes.number]),
+  runtime:       PropTypes.string,
+  certification: PropTypes.string,
+  bookmarked:    PropTypes.bool,
+  isLoading:     PropTypes.bool,
   onBookmarkToggle: PropTypes.func,
   onMenuClick:      PropTypes.func,
   onDelete:         PropTypes.func,
@@ -174,3 +170,4 @@ MovieCard.propTypes = {
   showDeleteButton: PropTypes.bool,
   deleteLoading:    PropTypes.bool,
 };
+

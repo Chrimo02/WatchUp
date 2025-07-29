@@ -1,6 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import {Star} from "lucide-react";
+import RatingButton from './RatingButton';
+import NoImageFound from '../assets/no-image-found.png';
 
 export default function SeasonListComponent({
   id,
@@ -10,12 +12,14 @@ export default function SeasonListComponent({
   vote_average,
   overview,
   still_path,
-  onRate
+  onRate,
+  yourRating = 0,
+  isAuthenticated
 }) {
   const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
   const imgSrc = still_path
     ? `${IMAGE_BASE_URL}${still_path}`
-    : 'https://via.placeholder.com/320x180?text=No+Image'
+    : NoImageFound
 
   return (
     <div
@@ -53,18 +57,23 @@ export default function SeasonListComponent({
 
             {/* Rate Button */}
             {onRate && (
-            <button
+              <button
                 onClick={() => onRate(id)}
                 className="
-                flex items-center gap-1 
-                text-[16px] font-medium text-red-500 
-                 hover:text-red-300 transition-colors 
-                font-sans
+                  flex items-center gap-1 
+                  text-[16px] font-medium text-red-500 
+                  hover:text-red-300 transition-colors 
+                  font-sans
                 "
-            >
+              >
                 <Star className="w-5 h-5" />
-                <span>Rate</span>
-            </button>
+                <span>
+                  { yourRating > 0 
+                      ? `${yourRating.toFixed(1)}/10`  // show saved rating
+                      : 'Rate'                         // or “Rate”
+                  }
+                </span>
+              </button>
             )}
 
         </div>

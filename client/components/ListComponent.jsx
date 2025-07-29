@@ -1,11 +1,29 @@
 // src/components/ListComponent.jsx
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { useMovies } from '../contexts/MovieContext';
-import { Star as StarOutline, Plus, Heart } from 'lucide-react';
-import { getPosterUrl } from '../utils/api';
-import AddToBookmark from '../assets/AddToBookmark.svg';
-import Bookmarked from '../assets/Bookmarked.svg';
+import React, { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'                
+import { useMovies }     from '../contexts/MovieContext'
+import { useLanguage }   from '../contexts/LanguageContext'     
+
+import {
+  getPosterUrl,
+  getMovieReleaseDates,                                     
+  getAgeRatingForRegion,    
+  getTVShowContentRatings,
+  getTVContentRatingForRegion, 
+  getMovieDetailsWithLanguage, 
+  getTVShowDetailsWithLanguage,                                  
+} from '../utils/api'
+
+import {
+  Star as StarOutline,
+  Plus,
+  Heart,
+} from 'lucide-react'
+import NoImageFound from '../assets/no-image-found.png'
+import AddToList      from '../assets/AddToList.svg'
+import AddToBookmark  from '../assets/AddToBookmark.svg'
+import Bookmarked     from '../assets/Bookmarked.svg'
 
 export default function ListComponent({
   mediaType,
@@ -18,77 +36,117 @@ export default function ListComponent({
   isLoading = false,
   onBookmarkToggle,
 }) {
-  const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
-  const [details, setDetails] = useState(null);
+  const { fetchMovieDetails, fetchTVShowDetails } = useMovies()
+  const { region, language } = useLanguage()  
+  const [details,   setDetails]   = useState(null)
+  const [ageCert,   setAgeCert]   = useState(null)             
 
+  /* ────────── load basic title data ────────── */
   useEffect(() => {
     async function loadDetails() {
       try {
-        const res = mediaType === 'movie'
-          ? await fetchMovieDetails(mediaId)
-          : await fetchTVShowDetails(mediaId);
-        setDetails(res);
+        const res =
+          mediaType === 'movie'
+            ? (await getMovieDetailsWithLanguage(mediaId, language)).data
+            : (await getTVShowDetailsWithLanguage(mediaId, language)).data
+        setDetails(res)
       } catch (err) {
-        console.error('Failed to load media details', err);
+        console.error('Failed to load media details', err)
       }
     }
-    loadDetails();
-  }, [mediaType, mediaId]);
+    loadDetails()
+  }, [mediaType, mediaId, language])
 
+  /* ────────── load regional age rating ────────── */
+  useEffect(() => {
+    if (!details) return
+
+    const fallback = details.adult ? '18+' : 'NR'
+    setAgeCert(fallback)
+
+    ;(async () => {
+      try {
+        if (mediaType === 'movie') {
+          const { data } = await getMovieReleaseDates(mediaId)
+          const cert = getAgeRatingForRegion(data, region) || fallback
+          setAgeCert(cert)
+        } else if (mediaType === 'tv') {
+          const { data } = await getTVShowContentRatings(mediaId)
+          const cert = getTVContentRatingForRegion(data, region) || fallback
+          setAgeCert(cert)
+        }
+      } catch (err) {
+        console.error('Failed to load certification', err)
+      }
+    })()
+  }, [details, mediaType, mediaId, region])
+
+  /* ────────── early loading guard ────────── */
   if (!details) {
-    return <div className="text-white p-4">Loading...</div>;
+    return <div className="text-white p-4">Loading...</div>
   }
 
-  const title = details.title || details.name;
-  const releaseDate = details.release_date || details.first_air_date;
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : '';
-  const ageRating = details.adult ? '18+' : '13+';
+  /* ────────── derived strings ────────── */
+  const title        = details.title || details.name
+  const releaseDate  = details.release_date || details.first_air_date
+  const year         = releaseDate ? new Date(releaseDate).getFullYear() : ''
 
-  let totalMinutes = 0;
-  if (mediaType === 'movie' && details.runtime) totalMinutes = details.runtime;
-  else if (mediaType === 'tv' && details.episode_run_time?.length) totalMinutes = details.episode_run_time[0];
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  let totalMinutes = 0
+  if (mediaType === 'movie' && details.runtime)               totalMinutes = details.runtime
+  else if (mediaType === 'tv' && details.episode_run_time?.length) totalMinutes = details.episode_run_time[0]
 
+  const hours      = Math.floor(totalMinutes / 60)
+  const minutes    = totalMinutes % 60
+  const runtimeStr = `${hours}h ${minutes}m`
+
+  // keep “PG-13” etc. in one piece
+  const certFixed  = (ageCert || '').replace('-', '-')
+
+  /* ────────── handlers ────────── */
   const handleBookmarkClick = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isLoading) return;
-    onBookmarkToggle(mediaId, mediaType);
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    if (isLoading) return
+    onBookmarkToggle(mediaId, mediaType)
+  }
 
+  /* ────────── render ────────── */
   return (
     <div className="relative bg-[#141414] border border-gray-700 rounded-2xl p-4">
       {/* Flex container with poster and content */}
       <div className="flex">
-        {/* Poster with full-height rounding */}
+        {/* Poster */}
         <div className="flex-shrink-0 mr-6 self-stretch rounded-2xl overflow-hidden">
-          <img
-            src={getPosterUrl(details.poster_path, 'w500')}
-            alt={title}
-            className="w-[150px] h-full object-cover"
-          />
+          <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+            <img
+              src={details.poster_path ? getPosterUrl(details.poster_path, 'w500') : NoImageFound}
+              alt={title}
+              className="w-[150px] h-full object-cover"
+            />
+          </Link>                                            {/* ← Added */}
         </div>
 
         {/* Main content */}
         <div className="flex flex-col space-y-2 flex-1 text-white">
           {/* Title */}
           <h2 className="font-poppins text-2xl lg:text-3xl font-bold leading-tight">
-            {title}
+            <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+              {title}
+            </Link>                                            {/* ← Added */}
           </h2>
 
-          {/* Info: Year • Age • Runtime */}
+          {/* Info row */}
           <div className="flex items-center space-x-1 text-gray-400 text-sm">
             {year && <span>{year}</span>}
             <span>•</span>
-            <span>{ageRating}</span>
+            <span>{certFixed}</span>
             <span>•</span>
-            <span>{hours}h {minutes}m</span>
+            <span>{runtimeStr}</span>
           </div>
 
-          {/* Actions: Rating + buttons */}
+          {/* Rating + buttons */}
           <div className="flex items-center space-x-4">
-            {/* Rating Display */}
+            {/* Score */}
             <div className="flex items-center space-x-1">
               <StarOutline className="w-5 h-5 text-yellow-400" fill="currentColor" stroke="none" />
               <span className="text-yellow-400 font-semibold text-xl">
@@ -96,25 +154,34 @@ export default function ListComponent({
               </span>
             </div>
 
-            {/* Rate Button */}
             {onRate && (
-              <button type="button" onClick={() => onRate(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
+              <button
+                type="button"
+                onClick={() => onRate(mediaId)}
+                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
+              >
                 <StarOutline className="w-5 h-5" />
                 <span>Rate</span>
               </button>
             )}
 
-            {/* Add to List Button */}
             {onAddToList && (
-              <button type="button" onClick={() => onAddToList(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
+              <button
+                type="button"
+                onClick={() => onAddToList(mediaId)}
+                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
+              >
                 <Plus className="w-5 h-5" />
                 <span>Add to list</span>
               </button>
             )}
 
-            {/* Favourite Button */}
             {onFavorite && (
-              <button type="button" onClick={() => onFavorite(mediaId)} className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition">
+              <button
+                type="button"
+                onClick={() => onFavorite(mediaId)}
+                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
+              >
                 <Heart className="w-5 h-5" />
                 <span>Favourite</span>
               </button>
@@ -131,14 +198,14 @@ export default function ListComponent({
             </div>
           )}
 
-          {/* Description */}
+          {/* Overview */}
           <p className="text-[15px] text-gray-300 leading-relaxed line-clamp-3 font-sans">
             {details.overview}
           </p>
         </div>
       </div>
 
-      {/* Bookmark Button */}
+      {/* Bookmark */}
       <button
         type="button"
         onClick={handleBookmarkClick}
@@ -157,17 +224,17 @@ export default function ListComponent({
         )}
       </button>
     </div>
-  );
+  )
 }
 
 ListComponent.propTypes = {
-  mediaType:      PropTypes.string.isRequired,
-  mediaId:        PropTypes.number.isRequired,
-  streamingPlatforms: PropTypes.array,
-  onRate:         PropTypes.func,
-  onAddToList:    PropTypes.func,
-  onFavorite:     PropTypes.func,
-  bookmarked:     PropTypes.bool,
-  isLoading:      PropTypes.bool,
-  onBookmarkToggle: PropTypes.func.isRequired,
-};
+  mediaType:           PropTypes.string.isRequired,
+  mediaId:             PropTypes.number.isRequired,
+  streamingPlatforms:  PropTypes.array,
+  onRate:              PropTypes.func,
+  onAddToList:         PropTypes.func,
+  onFavorite:          PropTypes.func,
+  bookmarked:          PropTypes.bool,
+  isLoading:           PropTypes.bool,
+  onBookmarkToggle:    PropTypes.func.isRequired,
+}

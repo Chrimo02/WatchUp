@@ -1,86 +1,50 @@
+// src/contexts/MovieContext.jsx
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { 
-  getMovies, 
-  getMovieDetails, 
-  getMovieCredits, 
-  getMovieVideos,
-  searchMovies,
-  discoverMovies,
-  getGenres,
+import {
+  getMovies,
   getTVShows,
+  getMovieDetails,
+  getMovieCredits,
+  getMovieVideos,
   getTVShowDetails,
   getTVShowCredits,
   getTVShowVideos,
+  searchMovies,
   searchTVShows,
-  discoverTVShows,
   searchMulti,
+  searchPeople,
+  discoverMovies,
+  discoverTVShows,
+  getGenres,
   addToWatchlist,
   getUpcomingMoviesWithVideos,
   getMovieAccountStates,
   getTVShowAccountStates,
-  getBatchAccountStates
+  getBatchAccountStates,
 } from '../utils/api';
 
-const MovieContext = createContext({
-  loading: false,
-  error: null,
-  trendingMovies: [],
-  popularMovies: [],
-  topRatedMovies: [],
-  popularTVShows: [],
-  topRatedTVShows: [],
-  airingTodayTVShows: [],
-  genres: [],
-  upcomingMoviesWithTrailers: [],
-  accountStates: {}, 
-  fetchTrendingMovies: async () => {},
-  fetchPopularMovies: async () => {},
-  fetchTopRatedMovies: async () => {},
-  fetchPopularTVShows: async () => {},
-  fetchTopRatedTVShows: async () => {},
-  fetchAiringTodayTVShows: async () => {},
-  fetchMovieDetails: async () => ({}),
-  fetchMovieCredits: async () => ({}),
-  fetchMovieVideos: async () => ({}),
-  fetchTVShowDetails: async () => ({}),
-  fetchTVShowCredits: async () => ({}),
-  fetchTVShowVideos: async () => ({}),
-  searchMoviesByQuery: async () => ({}),
-  searchTVShowsByQuery: async () => ({}),
-  searchMultiByQuery: async () => ({}),
-  discoverMoviesByFilter: async () => ({}),
-  discoverTVShowsByFilter: async () => ({}),
-  fetchGenres: async () => {},
-  toggleWatchlist: async () => {},
-  getAccountStates: async () => ({}),
-  getBatchAccountStates: async () => ({}),
-  isInWatchlist: () => false,
-  getRandomMovie: () => ({}),
-  getRandomTVShow: () => ({}),
-  fetchUpcomingMoviesWithTrailers: async () => {},
-});
-
+const MovieContext = createContext({});
 export const useMovies = () => useContext(MovieContext);
 
 export const MovieProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [trendingMovies, setTrendingMovies] = useState([]);
-  const [popularMovies, setPopularMovies] = useState([]);
-  const [topRatedMovies, setTopRatedMovies] = useState([]);
-  const [popularTVShows, setPopularTVShows] = useState([]);
-  const [topRatedTVShows, setTopRatedTVShows] = useState([]);
-  const [airingTodayTVShows, setAiringTodayTVShows] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [upcomingMoviesWithTrailers, setUpcomingMoviesWithTrailers] = useState([]);
-  const [accountStates, setAccountStates] = useState({}); // Cache for account states
+  const [error,   setError]   = useState(null);
 
-  // Helper function to get cache key
+  const [trendingMovies, setTrendingMovies]                       = useState([]);
+  const [popularMovies, setPopularMovies]                         = useState([]);
+  const [topRatedMovies, setTopRatedMovies]                       = useState([]);
+  const [popularTVShows, setPopularTVShows]                       = useState([]);
+  const [topRatedTVShows, setTopRatedTVShows]                     = useState([]);
+  const [airingTodayTVShows, setAiringTodayTVShows]               = useState([]);
+  const [genres, setGenres]                                       = useState([]);
+  const [upcomingMoviesWithTrailers, setUpcomingMoviesWithTrailers] = useState([]);
+  const [accountStates, setAccountStates]                         = useState({});
+
   const getCacheKey = (mediaId, mediaType) => `${mediaType}_${mediaId}`;
 
+  // Fetch trending movies
   const fetchTrendingMovies = async (timeWindow = 'day') => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getMovies.trending(timeWindow);
       setTrendingMovies(data.results);
@@ -92,9 +56,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch popular movies
   const fetchPopularMovies = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getMovies.popular(page);
       setPopularMovies(data.results);
@@ -106,9 +70,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch top-rated movies
   const fetchTopRatedMovies = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getMovies.topRated(page);
       setTopRatedMovies(data.results);
@@ -120,9 +84,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch popular TV shows
   const fetchPopularTVShows = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getTVShows.popular(page);
       setPopularTVShows(data.results);
@@ -134,9 +98,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch top-rated TV shows
   const fetchTopRatedTVShows = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getTVShows.topRated(page);
       setTopRatedTVShows(data.results);
@@ -148,9 +112,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch airing today TV shows
   const fetchAiringTodayTVShows = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { data } = await getTVShows.airing_today(page);
       setAiringTodayTVShows(data.results);
@@ -162,93 +126,51 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  // New function to get account states for a single item
+  // Get account states for a single item (with caching)
   const getAccountStates = async (mediaId, mediaType, sessionId) => {
-    const cacheKey = getCacheKey(mediaId, mediaType);
-    
-    // Return cached result if available
-    if (accountStates[cacheKey]) {
-      return accountStates[cacheKey];
+    const key = getCacheKey(mediaId, mediaType);
+    if (accountStates[key]) {
+      return accountStates[key];
     }
-
     try {
-      const response = mediaType === 'movie' || mediaType === 'film'
+      const resp = mediaType === 'movie'
         ? await getMovieAccountStates(mediaId, sessionId)
         : await getTVShowAccountStates(mediaId, sessionId);
-      
-      const states = response.data;
-      
-      // Cache the result
-      setAccountStates(prev => ({
-        ...prev,
-        [cacheKey]: states
-      }));
-      
+      const states = resp.data;
+      setAccountStates(prev => ({ ...prev, [key]: states }));
       return states;
-    } catch (error) {
-      console.error(`Failed to get account states for ${mediaType} ${mediaId}:`, error);
-      // Return default states on error
+    } catch (err) {
+      console.error(`Failed to get account states for ${mediaType} ${mediaId}:`, err);
       const defaultStates = { watchlist: false, favorite: false, rated: false };
-      
-      // Cache the default states to avoid repeated failed requests
-      setAccountStates(prev => ({
-        ...prev,
-        [cacheKey]: defaultStates
-      }));
-      
+      setAccountStates(prev => ({ ...prev, [key]: defaultStates }));
       return defaultStates;
     }
   };
 
-  // New function to get account states for multiple items
+  // Batch get account states for multiple items
   const getBatchAccountStatesForItems = async (items, sessionId) => {
-    // Filter out items that are already cached
-    const uncachedItems = items.filter(item => {
-      const cacheKey = getCacheKey(item.id, item.type);
-      return !accountStates[cacheKey];
-    });
-
-    if (uncachedItems.length === 0) {
-      // All items are cached, return current cache
-      return accountStates;
-    }
-
+    const uncached = items.filter(i => !accountStates[getCacheKey(i.id, i.type)]);
+    if (uncached.length === 0) return accountStates;
     try {
-      const newStates = await getBatchAccountStates(uncachedItems, sessionId);
-      
-      // Merge with existing cache
-      setAccountStates(prev => ({
-        ...prev,
-        ...newStates
-      }));
-      
+      const newStates = await getBatchAccountStates(uncached, sessionId);
+      setAccountStates(prev => ({ ...prev, ...newStates }));
       return { ...accountStates, ...newStates };
-    } catch (error) {
-      console.error('Failed to get batch account states:', error);
+    } catch (err) {
+      console.error('Failed to get batch account states:', err);
       return accountStates;
     }
   };
 
+  // Toggle watchlist
   const toggleWatchlist = async (accountId, sessionId, mediaId, mediaType, isCurrentlyInWatchlist) => {
     try {
       const shouldAdd = !isCurrentlyInWatchlist;
-      
-      console.log(`Toggling watchlist: ${mediaType} ${mediaId}, adding: ${shouldAdd}`);
-      
-      // Make API call
       await addToWatchlist(accountId, sessionId, mediaId, mediaType, shouldAdd);
-      
-      // Update cached account states immediately
-      const cacheKey = getCacheKey(mediaId, mediaType);
+      const key = getCacheKey(mediaId, mediaType);
       setAccountStates(prev => ({
         ...prev,
-        [cacheKey]: {
-          ...prev[cacheKey],
-          watchlist: shouldAdd
-        }
+        [key]: { ...prev[key], watchlist: shouldAdd }
       }));
-      
-      console.log(`Successfully toggled watchlist for ${mediaType} ${mediaId}`);
       return true;
     } catch (err) {
       console.error('Failed to toggle watchlist:', err);
@@ -256,14 +178,14 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Check if in watchlist
   const isInWatchlist = useCallback((mediaId, mediaType) => {
-    const cacheKey = getCacheKey(mediaId, mediaType);
-    return accountStates[cacheKey]?.watchlist || false;
+    return accountStates[getCacheKey(mediaId, mediaType)]?.watchlist || false;
   }, [accountStates]);
 
-  const fetchMovieDetails = async (movieId) => {
-    setLoading(true);
-    setError(null);
+  // Fetch movie details
+  const fetchMovieDetails = async movieId => {
+    setLoading(true); setError(null);
     try {
       const { data } = await getMovieDetails(movieId);
       return data;
@@ -276,9 +198,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchTVShowDetails = async (tvId) => {
-    setLoading(true);
-    setError(null);
+  // Fetch TV show details
+  const fetchTVShowDetails = async tvId => {
+    setLoading(true); setError(null);
     try {
       const { data } = await getTVShowDetails(tvId);
       return data;
@@ -291,7 +213,8 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchMovieCredits = async (movieId) => {
+  // Fetch movie credits
+  const fetchMovieCredits = async movieId => {
     try {
       const { data } = await getMovieCredits(movieId);
       return data;
@@ -301,7 +224,8 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchTVShowCredits = async (tvId) => {
+  // Fetch TV show credits
+  const fetchTVShowCredits = async tvId => {
     try {
       const { data } = await getTVShowCredits(tvId);
       return data;
@@ -311,7 +235,8 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchMovieVideos = async (movieId) => {
+  // Fetch movie videos
+  const fetchMovieVideos = async movieId => {
     try {
       const { data } = await getMovieVideos(movieId);
       return data;
@@ -321,7 +246,8 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const fetchTVShowVideos = async (tvId) => {
+  // Fetch TV show videos
+  const fetchTVShowVideos = async tvId => {
     try {
       const { data } = await getTVShowVideos(tvId);
       return data;
@@ -331,11 +257,14 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const searchMoviesByQuery = async (query, page = 1) => {
-    setLoading(true);
-    setError(null);
+  // Search movies (sorted by popularity desc)
+  const searchMoviesByQuery = useCallback(async (query, page = 1) => {
+    setLoading(true); setError(null);
     try {
       const { data } = await searchMovies(query, page);
+      data.results = (data.results || [])
+        .slice()
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       return data;
     } catch (err) {
       setError('Failed to search movies');
@@ -344,13 +273,16 @@ export const MovieProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const searchTVShowsByQuery = async (query, page = 1) => {
-    setLoading(true);
-    setError(null);
+  // Search TV shows (sorted by popularity desc)
+  const searchTVShowsByQuery = useCallback(async (query, page = 1) => {
+    setLoading(true); setError(null);
     try {
       const { data } = await searchTVShows(query, page);
+      data.results = (data.results || [])
+        .slice()
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       return data;
     } catch (err) {
       setError('Failed to search TV shows');
@@ -359,12 +291,34 @@ export const MovieProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const searchMultiByQuery = async (query, page = 1) => {
+  // Search people (sorted by popularity desc)
+  const searchPeopleByQuery = useCallback(async (query, page = 1) => {
+    setLoading(true); setError(null);
+    try {
+      const { data } = await searchPeople(query, page);
+      data.results = (data.results || [])
+        .slice()
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+      return data;
+    } catch (err) {
+      setError('Failed to search people');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Multi search (sorted by popularity desc)
+  const searchMultiByQuery = useCallback(async (query, page = 1) => {
     setLoading(true); setError(null);
     try {
       const { data } = await searchMulti(query, page);
+      data.results = (data.results || [])
+        .slice()
+        .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       return data;
     } catch (err) {
       setError('Failed to search multi');
@@ -373,11 +327,11 @@ export const MovieProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const discoverMoviesByFilter = async (params) => {
-    setLoading(true);
-    setError(null);
+  // Discover movies by filter
+  const discoverMoviesByFilter = async params => {
+    setLoading(true); setError(null);
     try {
       const { data } = await discoverMovies(params);
       return data;
@@ -390,9 +344,9 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
-  const discoverTVShowsByFilter = async (params) => {
-    setLoading(true);
-    setError(null);
+  // Discover TV shows by filter
+  const discoverTVShowsByFilter = async params => {
+    setLoading(true); setError(null);
     try {
       const { data } = await discoverTVShows(params);
       return data;
@@ -405,6 +359,7 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Fetch genres
   const fetchGenres = async () => {
     try {
       const { data } = await getGenres();
@@ -414,25 +369,23 @@ export const MovieProvider = ({ children }) => {
     }
   };
 
+  // Get random movie from popular
   const getRandomMovie = useCallback(() => {
-    if (popularMovies.length > 0) {
-      const randomIndex = Math.floor(Math.random() * popularMovies.length);
-      return popularMovies[randomIndex];
-    }
-    return null;
+    if (popularMovies.length === 0) return null;
+    const idx = Math.floor(Math.random() * popularMovies.length);
+    return popularMovies[idx];
   }, [popularMovies]);
 
+  // Get random TV show from popular
   const getRandomTVShow = useCallback(() => {
-    if (popularTVShows.length > 0) {
-      const randomIndex = Math.floor(Math.random() * popularTVShows.length);
-      return popularTVShows[randomIndex];
-    }
-    return null;
+    if (popularTVShows.length === 0) return null;
+    const idx = Math.floor(Math.random() * popularTVShows.length);
+    return popularTVShows[idx];
   }, [popularTVShows]);
 
+  // Fetch upcoming movies with trailers
   const fetchUpcomingMoviesWithTrailers = async (page = 1) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const data = await getUpcomingMoviesWithVideos(page);
       setUpcomingMoviesWithTrailers(data.results);
@@ -474,6 +427,7 @@ export const MovieProvider = ({ children }) => {
         fetchTVShowVideos,
         searchMoviesByQuery,
         searchTVShowsByQuery,
+        searchPeopleByQuery,
         searchMultiByQuery,
         discoverMoviesByFilter,
         discoverTVShowsByFilter,

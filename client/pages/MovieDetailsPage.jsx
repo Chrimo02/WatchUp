@@ -1,19 +1,20 @@
-"use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useMovies } from "../contexts/MovieContext"
-import { useAuth } from "../contexts/AuthContext"
-import { useOmdb } from "../contexts/OmdbContext"
-import { useMediaTransforms } from "../hooks/useMediaTransforms"
-import { useBookmarkToggle } from "../hooks/useBookmarkToggle"
-import { useLanguage } from "../contexts/LanguageContext"
-import {
-  posterSizes,
-  backdropSizes,
-  markAsFavorite,
-  addToWatchlist,
-  rateMovie,
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMovies } from '../contexts/MovieContext';
+import { useAuth } from '../contexts/AuthContext';
+import PLACEHOLDER from '../assets/placeholder-profile.png';
+import NoImageFound from '../assets/no-image-found.png';
+import { useOmdb } from '../contexts/OmdbContext';
+import { useMediaTransforms } from '../hooks/useMediaTransforms';
+import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
+import { useLanguage } from '../contexts/LanguageContext';
+import { 
+  posterSizes, 
+  backdropSizes, 
+  markAsFavorite, 
+  addToWatchlist, 
+  rateMovie, 
   deleteMovieRating,
   getMovieDetailsWithLanguage,
   getMovieReleaseDates,
@@ -127,17 +128,18 @@ const MovieDetailsPage = () => {
         console.error("Failed to fetch OMDB ratings:", error)
       }
     }
-  }
+  };
 
-  const formattedCast =
-    credits?.cast.map((member) => ({
-      id: member.id,
-      name: member.name,
-      role: member.character,
-      img: member.profile_path
-        ? `${posterSizes.medium}${member.profile_path}`
-        : "https://via.placeholder.com/150x225?text=No+Image",
-    })) || []
+  const formattedCast = credits?.cast
+  .map(member => ({
+    id: member.id,
+    name: member.name,
+    role: member.character,
+    img: member.profile_path
+      ? `${posterSizes.medium}${member.profile_path}`
+      : PLACEHOLDER
+  })) || []
+
 
   // Helper function to find the best trailer
   const findOfficialTrailer = (videoResults) => {
@@ -330,7 +332,8 @@ const MovieDetailsPage = () => {
 
     const posterUrl = movie.poster_path
       ? `${posterSizes.large}${movie.poster_path}`
-      : "https://via.placeholder.com/500x750?text=No+Poster"
+      : NoImageFound;
+
 
     const keyCrewRoles = ["Director", "Writer", "Screenplay", "Story"]
 

@@ -10,12 +10,15 @@ import { useMovies } from '../contexts/MovieContext';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerson } from '../contexts/PersonContext';
 import profilePlaceholder from '../assets/placeholder-profile.png';
-
+import { SortSelect } from '../components/ui/SortSelect';
+import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
+import { useLanguage } from '../contexts/LanguageContext'; 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export default function SingleArtistPage() {
   const { id } = useParams();
   const { isAuthenticated, user, sessionId, login } = useAuth();
+  const { language } = useLanguage();   
   const {
     toggleWatchlist,
     isInWatchlist,
@@ -30,6 +33,8 @@ export default function SingleArtistPage() {
     clearPerson
   } = usePerson();
 
+  const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
+
   const [filter, setFilter] = useState('movies');
   const [sortOption, setSortOption] = useState('date_desc');
   const [showFullBio, setShowFullBio] = useState(false);
@@ -37,10 +42,10 @@ export default function SingleArtistPage() {
   const bioRef = useRef(null);
 
   // 1) lade Person & Credits
-  useEffect(() => {
-    fetchPersonAndCredits(id);
+    useEffect(() => {
+    fetchPersonAndCredits(id, language);                           
     return () => clearPerson();
-  }, [id, fetchPersonAndCredits, clearPerson]);
+  }, [id, language, fetchPersonAndCredits, clearPerson]);  
 
   // 2) beim Erhalt der Credits: batch-load der AccountStates
   useEffect(() => {
@@ -233,7 +238,7 @@ export default function SingleArtistPage() {
     <div className="bg-[#141414] text-white w-full">
       {/* Header */}
       <div className="px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="space-y-6">
+        <div className="space-y-6 order-2 lg:order-1">
           <ArtistShowcase
             portraitSrc={
               person.profile_path
@@ -244,7 +249,7 @@ export default function SingleArtistPage() {
           <PersonalInfoCard info={personalInfo} />
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 order-1 lg:order-2">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold">
             {person.name}
           </h1>
@@ -275,7 +280,8 @@ export default function SingleArtistPage() {
             title="Known For"
             movieItems={knownForMovies}
             seriesItems={knownForTV}
-            onBookmarkToggle={handleBookmark}
+            onBookmarkToggle={handleBookmarkToggle}
+            bookmarkLoadingStates={bookmarkLoadingStates}
             showTabSwitcher
             defaultTab="movies"
           />
@@ -288,38 +294,14 @@ export default function SingleArtistPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <FilterTabs selected={filter} onSelect={setFilter} />
             <div className="relative inline-block">
-              <select
+              <SortSelect
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-                className="appearance-none bg-[#141414] border border-gray-700 text-white py-2 px-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
-              >
-                <option value="date_desc">Date ↓</option>
-                <option value="date_asc">Date ↑</option>
-                <option value="name_asc">Name A→Z</option>
-                <option value="name_desc">Name Z→A</option>
-                <option value="rating_desc">Rating ↓</option>
-                <option value="rating_asc">Rating ↑</option>
-                <option value="popularity_desc">Beliebt ↓</option>
-                <option value="popularity_asc">Beliebt ↑</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 20 20"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-                  />
-                </svg>
-              </div>
+                onChange={(val) => {
+                  setSortOption(val);
+                }}
+              />
             </div>
           </div>
-
           <CreditsListGrid actors={sortedActors} onBookmarkToggle={handleBookmark} />
         </div>
       </div>

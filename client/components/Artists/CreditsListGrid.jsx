@@ -1,22 +1,17 @@
+// src/components/Artists/CreditsListGrid.jsx
 import React from 'react';
 import CreditsListItem from './CreditsListItem';
 
 export default function CreditsListGrid({ actors, onBookmarkToggle }) {
   return (
-    <div className="space-y-4">
-      {actors.map(item => (
+    <div className="grid grid-cols-1 gap-4 auto-rows-fr">
+      {actors.map(a => (
         <CreditsListItem
-          key={`${item.type}-${item.id}`}
-          id={item.id}
-          type={item.type}
-          poster={item.poster}
-          title={item.title}
-          rating={item.rating}
-          yearsValue={item.date}      
-          characterValue={item.characterValue}
-          creditsValue={item.creditsValue}
-          bookmarked={item.bookmarked}
-          isLoading={false}
+          key={`${a.type}-${a.id}`}
+          id={a.id}
+          type={a.type}
+          yearsValue={a.yearsValue}
+          characterValue={a.characterValue}
           onBookmarkToggle={onBookmarkToggle}
         />
       ))}

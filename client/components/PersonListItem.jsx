@@ -2,22 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import profilePlaceholder from '../assets/placeholder-profile.png';
 import { usePerson } from '../contexts/PersonContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export default function PersonListItem({ person }) {
   const [bio, setBio] = useState('');
   const { fetchPersonBio } = usePerson();
+  const { language } = useLanguage();
 
   useEffect(() => {
     let mounted = true;
+    
+    
     async function loadBio() {
-      const b = await fetchPersonBio(person.id);
-      if (mounted) setBio(b || 'Sorry, no bio available for this person.');
+      const b = await fetchPersonBio(person.id, language);
+      if (mounted) setBio(b?.trim() ? b : 'Sorry, no bio available for this person.');
     }
     loadBio();
     return () => { mounted = false };
-  }, [person.id, fetchPersonBio]);
+  }, [person.id, language, fetchPersonBio]);
 
   return (
     <Link to={`/person/${person.id}`} className="block">

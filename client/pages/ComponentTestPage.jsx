@@ -1,4 +1,4 @@
-// src/pages/ComponentTestPage.jsx
+// the page will be deleted later
 import React, { useEffect } from 'react';
 import { useMovies } from '../contexts/MovieContext';
 import MovieCard from '../components/MovieCard';
@@ -37,6 +37,22 @@ function ComponentTestPage() {
   const posterBase = 'https://image.tmdb.org/t/p/w500';
   const moviePoster = movie.poster_path ? posterBase + movie.poster_path : '';
   const showPoster  = show.poster_path  ? posterBase + show.poster_path  : '';
+
+  const testEpisode = {
+    id: 62085,
+    episode_number: 1,
+    name: "Seven Thirty-Seven",
+    air_date: "2009-03-08",
+    runtime: 47,
+    vote_average: 8.3,
+    overview:
+      "Walter and Jesse are reminded of Tuco’s volatile nature, and try to figure a way out of their business partnership.",
+    still_path: "/bzoZjhbpriBT2N5kwgK0weUfVOX.jpg",
+  };
+  
+  const userRatings = {}; // No ratings yet
+  
+  const user = { name: "Test User" }; // Fake auth  
 
   return (
     <div className="space-y-8 p-6">
@@ -104,18 +120,17 @@ function ComponentTestPage() {
       onBookmarkToggle={() => {}}
     />
       
-
       {/* SeasonListComponent */}
-        <SeasonListComponent
-       id={/* episode id */ 1}
-       name={/* episode title */ "Pilot Test"}
-       air_date={/* air date */ "2025-07-01"}
-       runtime={/* runtime in minutes */ 42}
-       vote_average={/* rating 0–10 */ 8.7}
-       overview={/* brief synopsis */ "This is a test overview of the episode."}
-       still_path={/* e.g. from show.poster_path */ show.poster_path}
-       onRate={id => console.log("Rated episode", id)}
-     />
+      <SeasonListComponent
+        id={/* episode id */ 1}
+        name={/* episode title */ "Pilot Test"}
+        air_date={/* air date */ "2025-07-01"}
+        runtime={/* runtime in minutes */ 42}
+        vote_average={/* rating 0–10 */ 8.7}
+        overview={/* brief synopsis */ "This is a test overview of the episode."}
+        still_path={/* e.g. from show.poster_path */ show.poster_path}
+        onRate={id => console.log("Rated episode", id)}
+      />
     </div>
   );
 }

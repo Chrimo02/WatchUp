@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { 
-  getPersonDetails, 
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from 'react'
+import {
+  getPersonDetails,
   getPersonCombinedCredits,
-  getPopularPeople
-} from '../utils/api';
+  getPopularPeople,
+} from '../utils/api'
 
 const PersonContext = createContext({
   loading: false,
@@ -12,90 +18,88 @@ const PersonContext = createContext({
   credits: null,
   fetchPersonAndCredits: async () => {},
   clearPerson: () => {},
-  // PopularPeople:
   popularPeople: [],
   totalResults: 0,
   fetchPopularPeople: async () => {},
-  // Biography caching:
   fetchPersonBio: async () => {},
-});
+})
 
-export const usePerson = () => useContext(PersonContext);
+export const usePerson = () => useContext(PersonContext)
 
 export function PersonProvider({ children }) {
-  // Für einzelne Künstler-Details
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
-  const [person, setPerson]   = useState(null);
-  const [credits, setCredits] = useState(null);
+  const [loading, setLoading]   = useState(false)
+  const [error,   setError]     = useState(null)
+  const [person,  setPerson]    = useState(null)
+  const [credits, setCredits]   = useState(null)
+  const [popularPeople, setPopularPeople] = useState([])
+  const [totalResults, setTotalResults]   = useState(0)
 
-  // Für PopularPeople
-  const [popularPeople, setPopularPeople]   = useState([]);
-  const [totalResults, setTotalResults]     = useState(0);
+  const bioCacheRef = useRef({})
 
-  // Für Biography-Caching in Listen
-  const [bioCache, setBioCache] = useState({});
-
-  // Detail-Fetch für Artist
-  const fetchPersonAndCredits = useCallback(async (personId) => {
-    setLoading(true);
-    setError(null);
+    const fetchPersonAndCredits = useCallback(
+    async (personId, language = 'en-US') => {    setLoading(true)
+    setError(null)
     try {
       const [personRes, creditsRes] = await Promise.all([
-        getPersonDetails(personId),
-        getPersonCombinedCredits(personId),
-      ]);
-      setPerson(personRes.data);
-      setCredits(creditsRes.data);
+        getPersonDetails(personId, language),          
+        getPersonCombinedCredits(personId, language),  
+      ])
+      setPerson(personRes.data)
+      setCredits(creditsRes.data)
     } catch (err) {
-      setError('Could not load artist data.');
-      setPerson(null);
-      setCredits(null);
+      console.error(err)
+      setError('Could not load artist data.')
+      setPerson(null)
+      setCredits(null)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
-  // PopularPeople-List
-  const fetchPopularPeople = useCallback(async (page = 1) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await getPopularPeople(page);
-      setPopularPeople(res.data.results);
-      setTotalResults(res.data.total_results);
-    } catch (err) {
-      setError('Failed to load popular people.');
-      setPopularPeople([]);
-      setTotalResults(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Memoized Bio-Lader für Listenansicht, cacht Bio pro ID
-  const fetchPersonBio = useCallback(async (personId) => {
-    if (bioCache[personId]) {
-      return bioCache[personId];
-    }
-    try {
-      const res = await getPersonDetails(personId);
-      const bio = res.data?.biography || '';
-      setBioCache(prev => ({ ...prev, [personId]: bio }));
-      return bio;
-    } catch {
-      setBioCache(prev => ({ ...prev, [personId]: '' }));
-      return '';
-    }
-  }, [bioCache]);
-
-  // useCallback für Referenzgleichheit!
   const clearPerson = useCallback(() => {
-    setPerson(null);
-    setCredits(null);
-    setError(null);
-    setLoading(false);
-  }, []);
+    setPerson(null)
+    setCredits(null)
+    setError(null)
+    setLoading(false)
+  }, [])
+
+
+  const fetchPopularPeople = useCallback(async (page = 1) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await getPopularPeople(page)
+      setPopularPeople(res.data.results)
+      setTotalResults(res.data.total_results)
+    } catch (err) {
+      console.error(err)
+      setError('Failed to load popular people.')
+      setPopularPeople([])
+      setTotalResults(0)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const fetchPersonBio = useCallback(
+    async (personId, language = 'en-US') => {
+      const cacheKey = `${personId}_${language}`
+      if (cacheKey in bioCacheRef.current) {
+        return bioCacheRef.current[cacheKey]
+      }
+
+      try {
+        const res  = await getPersonDetails(personId, language)
+        const bio  = res.data?.biography || ''
+        bioCacheRef.current[cacheKey] = bio
+        return bio
+      } catch {
+        bioCacheRef.current[cacheKey] = ''
+        return ''
+      }
+    },
+    [] 
+  )
 
   return (
     <PersonContext.Provider
@@ -106,15 +110,15 @@ export function PersonProvider({ children }) {
         credits,
         fetchPersonAndCredits,
         clearPerson,
-        // PopularPeople:
+
         popularPeople,
         totalResults,
         fetchPopularPeople,
-        // Für PeopleListItem:
+
         fetchPersonBio,
       }}
     >
       {children}
     </PersonContext.Provider>
-  );
+  )
 }
