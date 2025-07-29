@@ -36,13 +36,13 @@ export function PersonProvider({ children }) {
 
   const bioCacheRef = useRef({})
 
-  const fetchPersonAndCredits = useCallback(async (personId) => {
-    setLoading(true)
+    const fetchPersonAndCredits = useCallback(
+    async (personId, language = 'en-US') => {    setLoading(true)
     setError(null)
     try {
       const [personRes, creditsRes] = await Promise.all([
-        getPersonDetails(personId),
-        getPersonCombinedCredits(personId),
+        getPersonDetails(personId, language),          
+        getPersonCombinedCredits(personId, language),  
       ])
       setPerson(personRes.data)
       setCredits(creditsRes.data)

@@ -12,12 +12,13 @@ import { usePerson } from '../contexts/PersonContext';
 import profilePlaceholder from '../assets/placeholder-profile.png';
 import { SortSelect } from '../components/ui/SortSelect';
 import { useBookmarkToggle } from '../hooks/useBookmarkToggle';
-
+import { useLanguage } from '../contexts/LanguageContext'; 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export default function SingleArtistPage() {
   const { id } = useParams();
   const { isAuthenticated, user, sessionId, login } = useAuth();
+  const { language } = useLanguage();   
   const {
     toggleWatchlist,
     isInWatchlist,
@@ -41,10 +42,10 @@ export default function SingleArtistPage() {
   const bioRef = useRef(null);
 
   // 1) lade Person & Credits
-  useEffect(() => {
-    fetchPersonAndCredits(id);
+    useEffect(() => {
+    fetchPersonAndCredits(id, language);                           
     return () => clearPerson();
-  }, [id, fetchPersonAndCredits, clearPerson]);
+  }, [id, language, fetchPersonAndCredits, clearPerson]);  
 
   // 2) beim Erhalt der Credits: batch-load der AccountStates
   useEffect(() => {
