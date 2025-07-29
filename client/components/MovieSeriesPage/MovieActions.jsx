@@ -20,7 +20,7 @@ const MovieActions = ({
       {/* Add to List Button */}
       <button
         onClick={() => {
-          onAddToList
+          onAddToList()
         }}
         className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
       >
