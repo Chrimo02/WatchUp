@@ -675,7 +675,7 @@ const MyListsPage = () => {
                         Loading...
                       </>
                     ) : (
-                      "Load More Movies"
+                      "Load More"
                     )}
                   </button>
                 )}
