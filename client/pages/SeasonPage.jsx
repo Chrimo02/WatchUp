@@ -86,7 +86,7 @@ export default function SeasonPage() {
 
         {/* Back button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/tv/${tvId}`)}
           className="absolute top-4 left-4 flex items-center gap-3 px-4 py-3 border border-gray-700 rounded-lg bg-black/50 text-white hover:bg-black/70 transition"
         >
           <ArrowLeft className="w-6 h-6" />
