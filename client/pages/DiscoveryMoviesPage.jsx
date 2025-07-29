@@ -154,7 +154,7 @@ const openListModal = id => setListTargetId(id);
             sort_by: sortBy,
             include_adult: false,
             certification_country: region,
-            certification_lte: certLTE,
+            'certification.lte': certLTE,
             'vote_count.gte': 50,
             ...apiParams,
           });
@@ -194,9 +194,10 @@ const openListModal = id => setListTargetId(id);
         );
       }
 
-      // Client‐side filtering
+            // Client‐side filtering
       let filtered = enriched;
 
+      // watchlist filter
       if (watchlistFilter === 'in') {
         filtered = filtered.filter(m =>
           accountStates[`movie_${m.id}`]?.watchlist
@@ -207,6 +208,7 @@ const openListModal = id => setListTargetId(id);
         );
       }
 
+      // ratings filter
       if (ratingsFilter === 'rated') {
         filtered = filtered.filter(m => {
           const state = accountStates[`movie_${m.id}`]?.rated;
@@ -219,9 +221,16 @@ const openListModal = id => setListTargetId(id);
         });
       }
 
+      // hide “Not Rated” if an age‐rating filter is active
+      // apiParams comes from: const { watchlistFilter, ratingsFilter, ...apiParams } = filters;
+      if (apiParams['certification.lte']) {
+        filtered = filtered.filter(m => m.certification !== 'NR');
+      }
+
+      // merge filtered results into state
       setMovies(prev => {
         const map = new Map(prev.map(m => [m.id, m]));
-        enriched.forEach(m => map.set(m.id, m));   // keep only API fields
+        filtered.forEach(m => map.set(m.id, m));
         return Array.from(map.values());
       });
 

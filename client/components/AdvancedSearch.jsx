@@ -33,6 +33,7 @@ export default function AdvancedSearch({
   dateField = "primary_release_date", // NEW! can pass "first_air_date" for TV
 }) {
   const { isAuthenticated } = useAuth();
+  const { region } = useLanguage();
   const { getSupportedRegions } = useLanguage();
   const { genres, fetchGenres } = useMovies();
 
@@ -106,7 +107,7 @@ export default function AdvancedSearch({
     };
   };
 
-  const handleSearch = () => {
+    const handleSearch = () => {
     const payload = {
       ...(selectedGenres.length && { with_genres: selectedGenres.join(",") }),
       ...(selectedLanguages.length && {
@@ -121,11 +122,14 @@ export default function AdvancedSearch({
       "vote_average.lte": scoreRange[1],
       "with_runtime.gte": runtimeRange[0],
       "with_runtime.lte": runtimeRange[1],
-      ...(selectedAgeRating !== "all" && { certification_lte: selectedAgeRating }),
+      ...(selectedAgeRating !== "all" && {
+        certification_country: region,
+        "certification.lte": selectedAgeRating,
+      }),
     };
 
     onSearch(payload);
-    onClose?.(); // if provided, auto‐close the menu
+    onClose?.();
   };
 
   const renderOptionGrid = (items, selected, setter, isCountry = false) => (
