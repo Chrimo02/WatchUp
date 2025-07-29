@@ -201,6 +201,7 @@ export const addMovieToList = (listId, sessionId, movieId) =>
     { params: { session_id: sessionId } },
   );
 
+  
 export const removeMovieFromList = (listId, sessionId, movieId) =>
   api.post(
     `/list/${listId}/remove_item`,

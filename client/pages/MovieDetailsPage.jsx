@@ -401,6 +401,7 @@ const MovieDetailsPage = () => {
       onAddToList: handleAddToList,
       isAuthenticated: isAuthenticated,
       onClearRating: handleClearRating,
+      mediaType: "movie"
     }
   }
 

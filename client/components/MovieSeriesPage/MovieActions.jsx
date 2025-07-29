@@ -12,21 +12,23 @@ const MovieActions = ({
   onFavoriteToggle,
   onWatchlistToggle,
   onPlayTrailer,
-  onAddToList
+  onAddToList,
+  mediaType
 }) => {
 
   return (
     <div className="flex flex-wrap gap-3">
       {/* Add to List Button */}
-      <button
-        onClick={() => {
-          onAddToList()
-        }}
-        className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
-      >
-        <img src={AddToList} className="w-5 h-5" alt="Add to list" />
-      </button>
-
+      { mediaType === 'movie' && 
+        <button
+          onClick={() => {
+            onAddToList()
+          }}
+          className="w-12 h-12 bg-[#222629] rounded-full hover:bg-[#222629]/80 flex items-center justify-center"
+        >
+          <img src={AddToList} className="w-5 h-5" alt="Add to list" />
+        </button> 
+      }
       {/* Favorite Button */}
       <button
         onClick={onFavoriteToggle}

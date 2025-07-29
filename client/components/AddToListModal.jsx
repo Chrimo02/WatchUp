@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { X } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { useAuth } from '../contexts/AuthContext'
-import { getUserLists, addMovieToList } from '../utils/api'
+import { getUserLists, addMovieToList  } from '../utils/api'
 
 export default function AddToListModal({
   isOpen,

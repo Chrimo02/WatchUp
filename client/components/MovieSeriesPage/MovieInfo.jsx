@@ -71,6 +71,7 @@ const playTrailer = () => {
                 onWatchlistToggle={movieData.onWatchlistToggle}
                 onPlayTrailer={playTrailer}
                 onAddToList={movieData.onAddToList} 
+                mediaType={movieData.mediaType}
               />
 
               <MovieOverview 

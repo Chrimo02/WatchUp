@@ -7,7 +7,6 @@ import SeasonsList from '../components/SeasonsList';
 import PLACEHOLDER from '../assets/placeholder-profile.png';
 import { useOmdb } from '../contexts/OmdbContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import AddToListModal from "../components/AddToListModal";
 import {
   posterSizes,
   backdropSizes,
@@ -41,7 +40,6 @@ const SeriesDetailsPage = () => {
   const { language, region } = useLanguage();
   const { transformTVShowData } = useMediaTransforms();
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
-  const [showAddToListModal, setShowAddToListModal] = useState(false)
   const { loading, error, fetchTVShowVideos, getAccountStates } = useMovies();
   const { getSeriesDetails, selectedSeries } = useOmdb();
 
@@ -67,15 +65,8 @@ const SeriesDetailsPage = () => {
 
   const toast = (msg, type = 'success') => {
     setNotification({ show: true, message: msg, type });
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 2000);
   };
-  const handleAddToList = () => {
-    if (!isAuthenticated || !sessionId) {
-       return login()
-
-    }
-    setShowAddToListModal(true)
-  }
 
   // Pick best trailer
   const pickTrailer = arr => {
@@ -271,7 +262,6 @@ const SeriesDetailsPage = () => {
       onRateMovie: handleRate,
       onClearRating: handleClearRating,
       isAuthenticated,
-      onAddToList: handleAddToList
     };
   })();
 
@@ -358,19 +348,6 @@ const SeriesDetailsPage = () => {
           defaultTab="movies"
         />
       </section>
-      <AddToListModal
-        isOpen={showAddToListModal}
-        onClose={() => setShowAddToListModal(false)}
-        /** pass your TV show’s ID here… */
-        mediaId={showData.id}
-        /** …and tell it this is a tv-show, not a movie */
-        mediaType="tv"
-        onAdded={(listId) => {
-          /** use your `toast` helper, not `showNotification` */
-          toast("Added to your list!");
-          setShowAddToListModal(false);
-        }}
-      />
       </div>
     </div>
   );
