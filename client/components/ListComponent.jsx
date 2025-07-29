@@ -8,7 +8,9 @@ import { useLanguage }   from '../contexts/LanguageContext'
 import {
   getPosterUrl,
   getMovieReleaseDates,                                     
-  getAgeRatingForRegion,     
+  getAgeRatingForRegion,    
+  getTVShowContentRatings,
+  getTVContentRatingForRegion, 
   getMovieDetailsWithLanguage, 
   getTVShowDetailsWithLanguage,                                  
 } from '../utils/api'
@@ -62,13 +64,17 @@ export default function ListComponent({
     const fallback = details.adult ? '18+' : 'NR'
     setAgeCert(fallback)
 
-    if (mediaType !== 'movie') return   // typical TV shows don’t expose regional certs
-
     ;(async () => {
       try {
-        const { data } = await getMovieReleaseDates(mediaId)
-        const cert = getAgeRatingForRegion(data, region) || fallback
-        setAgeCert(cert)
+        if (mediaType === 'movie') {
+          const { data } = await getMovieReleaseDates(mediaId)
+          const cert = getAgeRatingForRegion(data, region) || fallback
+          setAgeCert(cert)
+        } else if (mediaType === 'tv') {
+          const { data } = await getTVShowContentRatings(mediaId)
+          const cert = getTVContentRatingForRegion(data, region) || fallback
+          setAgeCert(cert)
+        }
       } catch (err) {
         console.error('Failed to load certification', err)
       }
