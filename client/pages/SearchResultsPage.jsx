@@ -1,3 +1,4 @@
+// src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams }    from 'react-router-dom';
 import { useMovies }          from '../contexts/MovieContext';
@@ -12,7 +13,6 @@ import chairsBg               from '../assets/chairs.jpg';
 import {
   rateMovie,
   rateTVShow,
-  addToWatchlist,
   getMovieWatchProviders,
   getTVShowWatchProviders,
 } from '../utils/api';
@@ -94,6 +94,7 @@ export default function SearchResultsPage() {
 
   useEffect(() => { setPage(1); }, [query, filter]);
 
+  // Fetch all count
   useEffect(() => {
     let cancelled = false;
     if (!query) { setAllTotal(0); return () => { cancelled = true; }; }
@@ -106,9 +107,13 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMultiByQuery]);
 
+  // Main search per filter
   useEffect(() => {
     let cancelled = false;
-    if (!query) { setItems([]); setTotal(0); setLoading(false); return () => { cancelled = true; }; }
+    if (!query) {
+      setItems([]); setTotal(0); setLoading(false);
+      return () => { cancelled = true; };
+    }
     (async () => {
       setLoading(true);
       try {
@@ -144,6 +149,7 @@ export default function SearchResultsPage() {
     searchMultiByQuery,
   ]);
 
+  // Counts for movie/tv/person
   useEffect(() => {
     let cancelled = false;
     if (!query) { setMovieTotal(0); setTvTotal(0); setPersonTotal(0); return () => { cancelled = true; }; }
@@ -164,6 +170,7 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMoviesByQuery, searchTVShowsByQuery, searchPeopleByQuery]);
 
+  // Watch providers for movie/tv
   useEffect(() => {
     let cancelled = false;
     const relevant = items.filter(i => i.media_type==='movie' || i.media_type==='tv');
@@ -176,9 +183,9 @@ export default function SearchResultsPage() {
             ? await getMovieWatchProviders(item.id)
             : await getTVShowWatchProviders(item.id);
           const c = data.results[region] || {};
-          map[item.id] = { stream: c.flatrate||[], rent: c.rent||[], buy: c.buy||[] };
+          map[item.id] = { stream:c.flatrate||[], rent:c.rent||[], buy:c.buy||[] };
         } catch {
-          map[item.id] = { stream: [], rent: [], buy: [] };
+          map[item.id] = { stream:[], rent:[], buy:[] };
         }
       }
       if (!cancelled) setWatchProvidersMap(map);
@@ -186,24 +193,25 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [items, region]);
 
+  // Batch-fetch favorite & rating states
   useEffect(() => {
     if (!sessionId || !items.length) return;
     const batch = items
       .filter(i => i.media_type==='movie' || i.media_type==='tv')
-      .map(i => ({ id: i.id, type: i.media_type }));
+      .map(i => ({ id:i.id, type:i.media_type }));
     if (batch.length) getBatchAccountStates(batch, sessionId);
   }, [items, sessionId, getBatchAccountStates]);
 
-  const counts = { all: allTotal, movie: movieTotal, tv: tvTotal, person: personTotal };
+  const counts = { all:allTotal, movie:movieTotal, tv:tvTotal, person:personTotal };
   const pageSize = 20;
-  const start    = (page - 1) * pageSize + 1;
-  const end      = Math.min(page * pageSize, total);
+  const start    = (page -1)*pageSize +1;
+  const end      = Math.min(page*pageSize, total);
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
       {/* HEADER */}
       <div className="relative h-64 bg-cover bg-center flex flex-col items-center justify-center"
-           style={{ backgroundImage: `url(${chairsBg})` }}>
+           style={{ backgroundImage:`url(${chairsBg})` }}>
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414] to-transparent"/>
         <div className="absolute bottom-4 left-8 text-sm text-gray-300">
           {start.toLocaleString()} – {end.toLocaleString()} of {total.toLocaleString()} Results
@@ -212,14 +220,12 @@ export default function SearchResultsPage() {
           Results for “<span className="italic">{query}</span>”
         </h1>
         <div className="absolute bottom-4 right-8 flex gap-2">
-          {['all','movie','tv','person'].map(type => {
+          {['all','movie','tv','person'].map(type=> {
             const label = type==='all'?'All':type==='movie'?'Movies':type==='tv'?'Series':'People';
             return (
-              <button key={type} onClick={() => setFilter(type)}
+              <button key={type} onClick={()=>setFilter(type)}
                       className={`px-4 py-2 rounded-full font-medium ${
-                        filter===type
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        filter===type?'bg-red-600 text-white':'bg-gray-800 text-gray-300 hover:bg-gray-700'
                       }`}>
                 {label} ({counts[type].toLocaleString()})
               </button>
@@ -228,27 +234,28 @@ export default function SearchResultsPage() {
         </div>
       </div>
 
+      {/* CONTENT */}
       <div className="px-4 py-8 space-y-6">
         {loading
           ? <div className="text-center py-10">Loading…</div>
           : items.length===0
             ? <div className="text-center py-10 text-gray-400">No results found.</div>
             : <div className="flex flex-col gap-4">
-                {items.map(item => (
+                {items.map(item=>(
                   item.media_type==='person'
                   ? <PersonListItem key={item.id} person={item}/>
                   : <ListComponent
                       key={item.id}
                       mediaType={item.media_type}
                       mediaId={item.id}
-                      bookmarked={isInWatchlist(item.id, item.media_type)}
+                      bookmarked={isInWatchlist(item.id,item.media_type)}
                       isLoading={bookmarkLoadingStates.has(item.id)}
                       streamingPlatforms={[
                         ...(watchProvidersMap[item.id]?.stream||[]),
                         ...(watchProvidersMap[item.id]?.rent||[]),
                         ...(watchProvidersMap[item.id]?.buy||[])
-                      ].map(p => ({
-                        icon: p.logo_path
+                      ].map(p=>({
+                        icon:p.logo_path
                           ? <img key={p.provider_id}
                                  src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
                                  alt={p.provider_name}
@@ -256,24 +263,21 @@ export default function SearchResultsPage() {
                           : null
                       }))}
                       onBookmarkToggle={handleBookmarkToggle}
-                      onRate={() =>
-                        openRateModal(
-                          item.id,
-                          item.title||item.name,
-                          item.media_type,
-                          accountStates[`${item.media_type}_${item.id}`]?.rated?.value||0
-                        )
-                      }
-                      onAddToList={() => openListModal(item.id)}
-                      onFavorite={() =>
-                        toggleFavorite(
-                          user.id,
-                          sessionId,
-                          item.id,
-                          item.media_type,
-                          accountStates[`${item.media_type}_${item.id}`]?.favorite ?? false
-                        )
-                      }
+                      onRate={()=> openRateModal(
+                        item.id,
+                        item.title||item.name,
+                        item.media_type,
+                        accountStates[`${item.media_type}_${item.id}`]?.rated?.value||0
+                      )}
+                      // only movies get an add-to-list button
+                      onAddToList={item.media_type==='movie' ? () => openListModal(item.id) : undefined}
+                      onFavorite={()=> toggleFavorite(
+                        user.id,
+                        sessionId,
+                        item.id,
+                        item.media_type,
+                        accountStates[`${item.media_type}_${item.id}`]?.favorite ?? false
+                      )}
                       isFavorite={accountStates[`${item.media_type}_${item.id}`]?.favorite ?? false}
                       currentRating={accountStates[`${item.media_type}_${item.id}`]?.rated?.value ?? 0}
                     />
@@ -281,20 +285,21 @@ export default function SearchResultsPage() {
               </div>
         }
 
-        {total > pageSize && (
+        {/* PAGINATION */}
+        {total>pageSize && (
           <div className="flex justify-center items-center gap-4 pt-4">
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => Math.max(p - 1, 1))}
-              disabled={page === 1}
+              onClick={()=>setPage(p=>Math.max(p-1,1))}
+              disabled={page===1}
             >
               « Prev
             </button>
             <span>Page {page}</span>
             <button
               className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setPage(p => p + 1)}
-              disabled={page * pageSize >= total}
+              onClick={()=>setPage(p=>p+1)}
+              disabled={page*pageSize>=total}
             >
               Next »
             </button>
@@ -305,8 +310,8 @@ export default function SearchResultsPage() {
       {/* Modals */}
       <RatingModal
         isOpen={!!ratingTarget}
-        title={ratingTarget?.title || ''}
-        currentRating={ratingTarget?.current || 0}
+        title={ratingTarget?.title||''}
+        currentRating={ratingTarget?.current||0}
         tempRating={tempRating}
         setTempRating={setTempRating}
         onClose={closeRateModal}
@@ -314,10 +319,10 @@ export default function SearchResultsPage() {
         onClearRating={clearRating}
       />
       <AddToListModal
-        isOpen={listTargetId !== null}
-        onClose={() => setListTargetId(null)}
-        mediaId={listTargetId ?? 0}
-        onAdded={() => setListTargetId(null)}
+        isOpen={listTargetId!==null}
+        onClose={()=>setListTargetId(null)}
+        mediaId={listTargetId||0}
+        onAdded={()=>setListTargetId(null)}
       />
     </div>
   );
