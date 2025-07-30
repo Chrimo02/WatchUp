@@ -30,7 +30,9 @@ export default function ListComponent({
   mediaId,
   streamingPlatforms = [],
   onRate,
+  currentRating = 0,
   onAddToList,
+  isFavorite = false,
   onFavorite,
   bookmarked = false,
   isLoading = false,
@@ -109,6 +111,12 @@ export default function ListComponent({
     if (isLoading) return
     onBookmarkToggle(mediaId, mediaType)
   }
+  // neuer Handler für Favoriten
+  const handleFavoriteClick = e => {
+    e.preventDefault()
+    e.stopPropagation()
+    onFavorite()     // ruft toggleFavorite im Parent
+  }
 
   /* ────────── render ────────── */
   return (
@@ -161,7 +169,11 @@ export default function ListComponent({
                 className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
               >
                 <StarOutline className="w-5 h-5" />
-                <span>Rate</span>
+                <span>
+                  {currentRating > 0
+                    ? `${currentRating}/10`
+                    : 'Rate'}
+                </span>
               </button>
             )}
 
@@ -179,11 +191,23 @@ export default function ListComponent({
             {onFavorite && (
               <button
                 type="button"
-                onClick={() => onFavorite(mediaId)}
-                className="flex items-center gap-[2px] text-red-500 hover:text-red-300 transition"
+                onClick={handleFavoriteClick}
+                className={`
+                  flex items-center gap-1 transition
+                  ${isFavorite
+                    ? 'text-red-500 hover:text-red-300'
+                    : 'text-red-500 hover:text-red-300'}
+                `}
               >
-                <Heart className="w-5 h-5" />
-                <span>Favourite</span>
+                <Heart
+                  className="w-5 h-5"
+                  fill={isFavorite ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth={2}
+                />
+                <span className="ml-1">
+                  {isFavorite ? 'Favourited' : 'Favourite'}
+                </span>
               </button>
             )}
           </div>
@@ -232,8 +256,10 @@ ListComponent.propTypes = {
   mediaId:             PropTypes.number.isRequired,
   streamingPlatforms:  PropTypes.array,
   onRate:              PropTypes.func,
+  currentRating:       PropTypes.number,
   onAddToList:         PropTypes.func,
   onFavorite:          PropTypes.func,
+  isFavorite:          PropTypes.bool,
   bookmarked:          PropTypes.bool,
   isLoading:           PropTypes.bool,
   onBookmarkToggle:    PropTypes.func.isRequired,
