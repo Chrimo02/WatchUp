@@ -438,7 +438,12 @@ const openListModal = id => setListTargetId(id);
                        )
                      }
                     onAddToList={() => openListModal(m.id)}
-                    onRate={val => rateMovie(m.id, sessionId, val)}
+                    isFavorite={m.isFavorite}
+                    // instead of immediately rating, open the modal:
+                    onRate={id => openRateModal(id, m.title, 'movie', m.myRating)}
+                    // pass down the user's own rating:
+                    currentRating={m.myRating}
+
                     streamingPlatforms={[
                       ...(providersMap[m.id]?.flatrate || []),
                       ...(providersMap[m.id]?.rent    || []),

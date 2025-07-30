@@ -397,8 +397,12 @@ export default function DiscoverySeriesPage() {
                     isLoading={s.isLoading}
                     onBookmarkToggle={handleBookmarkToggle}
                     onFavorite={() => handleFavoriteToggle(s.id)}
+                    isFavorite={s.isFavorite}
                     onAddToList={() => addToWatchlist(user.id, sessionId, s.id, 'tv', !isInWatchlist(s.id, 'tv'))}
-                    onRate={val => rateTVShow(s.id, sessionId, val)}
+                    // ← instead of rating immediately, open the modal
+                    onRate={id => openRateModal(id, s.title, 'tv', s.myRating)}
+                    // ← let ListComponent know the user’s own rating
+                    currentRating={s.myRating}
                     streamingPlatforms={[
                       ...(providersMap[s.id]?.flatrate||[]),
                       ...(providersMap[s.id]?.rent||[]),
