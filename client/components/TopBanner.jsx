@@ -24,8 +24,8 @@ function TopBanner() {
       className="relative w-screen h-[250px] flex flex-col items-center justify-between bg-movie-dark font-sans"
       style={{
         backgroundImage: `linear-gradient(to top, #141414, rgba(68,68,68,0.27)), url(${seatsImg})`,
-        backgroundSize: 'cover', // Bild strecken/füllen
-        backgroundRepeat: 'no-repeat', // kein Kacheln
+        backgroundSize: 'cover', 
+        backgroundRepeat: 'no-repeat', 
       }}
     >
 
@@ -168,8 +168,6 @@ function TopBanner() {
   );
 }
 
-// Standard-Export für Kompatibilität (optional, falls noch genutzt)
 export default TopBanner;
 
-// Benannter Export für direkten Import
 export { TopBanner };

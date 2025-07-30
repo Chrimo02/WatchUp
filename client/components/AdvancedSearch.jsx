@@ -30,7 +30,7 @@ let savedFilters = {
 export default function AdvancedSearch({
   onSearch,
   onClose,
-  dateField = "primary_release_date", // NEW! can pass "first_air_date" for TV
+  dateField = "primary_release_date", 
 }) {
   const { isAuthenticated } = useAuth();
   const { region } = useLanguage();

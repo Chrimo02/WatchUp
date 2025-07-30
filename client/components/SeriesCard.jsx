@@ -28,7 +28,7 @@ export default function SeriesCard({
     })();
   }, [mediaId]);
 
-  if (!details) return null; // you could swap in a spinner
+  if (!details) return null; 
 
   const title     = details.name;
   const date      = details.first_air_date;

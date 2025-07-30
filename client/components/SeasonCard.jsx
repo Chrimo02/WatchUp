@@ -3,7 +3,7 @@ import Star          from "../assets/Star.svg";
 import NoImageFound  from "../assets/no-image-found.png";
 
 /**
- * Displays one season (poster • title • year • ep‑count • TMDB score).
+ * Displays one season
  * ‑ No “Rate” button – seasons themselves can’t be rated via the API.
  */
 export default function SeasonCard({ season }) {

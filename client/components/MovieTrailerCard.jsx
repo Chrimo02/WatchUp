@@ -14,7 +14,7 @@ export function MovieTrailerCard({ title, releaseDate, posterUrl, youtubeId }) {
 
   return (
     <div className="w-[359px] h-[247px] flex-shrink-0 text-white relative">
-      {/* ▶ Trailer / Poster (359 × 201) */}
+      {/* Trailer / Poster (359 × 201) */}
       <div
         onClick={() => setShowVideo((s) => !s)}
         className="w-[359px] h-[201px] relative overflow-hidden rounded-lg cursor-pointer"
@@ -47,7 +47,7 @@ export function MovieTrailerCard({ title, releaseDate, posterUrl, youtubeId }) {
         )}
       </div>
 
-      {/* Title & full date (46 px area) */}
+      {/* Title & full date */}
       <div className="w-full h-[46px] mt-[0.25rem] text-center flex flex-col justify-center">
         <h3 className="text-[15px] font-semibold leading-tight truncate">{title}</h3>
         <span className="text-xs text-gray-300">{formatDate(releaseDate)}</span>

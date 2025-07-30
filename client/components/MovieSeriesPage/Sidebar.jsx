@@ -2,7 +2,7 @@
 import React from 'react';
 import { posterSizes } from '../../utils/api';
 
-// Icon imports (adjust paths if needed)
+// Icon imports
 import homepageIcon from '../../assets/home.svg';
 import facebookIcon from '../../assets/facebook.svg';
 import imdbIcon     from '../../assets/imdb.svg';

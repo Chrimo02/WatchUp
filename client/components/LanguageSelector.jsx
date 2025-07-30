@@ -6,7 +6,7 @@ export default function LanguageSelector() {
   const { language, region, setLanguage, setRegion, getSupportedRegions } = useLanguage()
   const [showDropdown, setShowDropdown] = useState(false)
 
-  /* ---------- NEW: click‑outside handling ---------- */
+  /* ---------- click‑outside handling ---------- */
   const containerRef = useRef(null)
   useEffect(() => {
     const close = e => {

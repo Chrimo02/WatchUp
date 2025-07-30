@@ -39,12 +39,12 @@ export default function AddToListModal({
       try {
         setLoading(true); setError(null)
 
-        // 1️⃣  fetch all lists that belong to the user
+        // fetch all lists that belong to the user
         const res   = await getUserLists(user.id, sessionId)
         const lists = res.data.results || []
         setLists(lists)
 
-        // 2️⃣  for every list ask once whether the movie is already inside
+        //for every list ask once whether the movie is already inside
         const pairs = await Promise.all(
           lists.map(async l => {
             try {

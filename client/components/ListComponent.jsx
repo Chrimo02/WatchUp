@@ -111,11 +111,11 @@ export default function ListComponent({
     if (isLoading) return
     onBookmarkToggle(mediaId, mediaType)
   }
-  // neuer Handler für Favoriten
+  // new Handler for Favorites
   const handleFavoriteClick = e => {
     e.preventDefault()
     e.stopPropagation()
-    onFavorite()     // ruft toggleFavorite im Parent
+    onFavorite()     // calls toggleFavorite in Parent
   }
 
   /* ────────── render ────────── */
@@ -125,22 +125,22 @@ export default function ListComponent({
       <div className="flex">
         {/* Poster */}
         <div className="flex-shrink-0 mr-6 self-stretch rounded-2xl overflow-hidden">
-          <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+          <Link to={`/${mediaType}/${mediaId}`}>            
             <img
               src={details.poster_path ? getPosterUrl(details.poster_path, 'w500') : NoImageFound}
               alt={title}
               className="w-[150px] h-full object-cover"
             />
-          </Link>                                            {/* ← Added */}
+          </Link>                                            
         </div>
 
         {/* Main content */}
         <div className="flex flex-col space-y-2 flex-1 text-white">
           {/* Title */}
           <h2 className="font-poppins text-2xl lg:text-3xl font-bold leading-tight">
-            <Link to={`/${mediaType}/${mediaId}`}>            {/* ← Added */}
+            <Link to={`/${mediaType}/${mediaId}`}>            
               {title}
-            </Link>                                            {/* ← Added */}
+            </Link>                                            
           </h2>
 
           {/* Info row */}

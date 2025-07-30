@@ -22,7 +22,7 @@ const TrailerModal = ({ isOpen, onClose, movieTitle, trailer }) => {
     };
   }, [isOpen, onClose]);
 
-  // TrailerModal.jsx  ── only the return() block shown
+  // TrailerModal.jsx 
 if (!isOpen) return null;
 
 return (

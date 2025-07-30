@@ -32,7 +32,7 @@ export default function MovieCard({
   const { fetchMovieDetails, fetchTVShowDetails } = useMovies();
   const [details, setDetails] = useState(null);
 
-  // Nur fetchen, wenn kein propTitle gegeben wurde
+  // Only fetch details if no propTitle is given
   const useFetch = !propTitle;
 
   useEffect(() => {

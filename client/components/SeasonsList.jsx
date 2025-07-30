@@ -17,7 +17,7 @@ export default function SeasonsList({ tvId, seasons = [] }) {
         {normalSeasons.map(season => (
            <Link
             key={season.id}
-            to={`/series/${tvId}/season/${season.season_number}`}  /* ← NEW */
+            to={`/series/${tvId}/season/${season.season_number}`} 
             className="hover:opacity-90 transition-opacity"
           >
           <SeasonCard key={season.id} season={season} />

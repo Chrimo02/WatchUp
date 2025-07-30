@@ -41,7 +41,6 @@ export default function App() {
           <Route path="tv/:id" element={<SeriesDetailsPage />} />
           <Route path="person/:id" element={<SingleArtistPage />} />
           <Route path="people" element={<PopularPeople />} />
-          <Route path="component-test" element={<ComponentTestPage />} />
           <Route path="series/:tvId/season/:seasonNumber" element={<SeasonPage />} />
           <Route path="list/:listId" element={<ListDetailsPage />} />
 
