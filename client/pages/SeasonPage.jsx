@@ -8,7 +8,7 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import SeasonListComponent from '../components/SeasonListComponent';
 import RatingModal from '../components/MovieSeriesPage/RatingModal';
-import { useAuth } from '../contexts/AuthContext';  // adjust path if needed
+import { useAuth } from '../contexts/AuthContext'; 
 
 export default function SeasonPage() {
   const { tvId, seasonNumber } = useParams();
@@ -152,7 +152,7 @@ export default function SeasonPage() {
               overview={ep.overview}
               still_path={ep.still_path}
               yourRating={userRatings[ep.id] || 0}
-              isAuthenticated={isAuthenticated}      // pull from your AuthContext
+              isAuthenticated={isAuthenticated}     
               onRate={() => openRatingModal(ep.id)}
             />
           ))}

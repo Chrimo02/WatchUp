@@ -43,7 +43,6 @@ const ListDetailsPage = () => {
       const response = await getListDetails(listId, sessionId)
       setListDetails(response.data)
 
-      // Initialize bookmark states for all items
       if (response.data.items) {
         await initializeBookmarkStates(response.data.items)
       }
@@ -85,14 +84,12 @@ const ListDetailsPage = () => {
     try {
       await removeMovieFromList(listId, sessionId, movieId)
 
-      // Update local state
       setListDetails((prev) => ({
         ...prev,
         items: prev.items.filter((item) => item.id !== movieId),
         item_count: prev.item_count - 1,
       }))
 
-      // Remove from bookmark states
       setBookmarkStates((prev) => {
         const newStates = { ...prev }
         delete newStates[key]

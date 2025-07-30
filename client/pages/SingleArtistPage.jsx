@@ -1,4 +1,3 @@
-// src/pages/SingleArtistPage.jsx
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import FilterTabs from '../components/Artists/FilterTabs';
@@ -41,13 +40,13 @@ export default function SingleArtistPage() {
   const [bioOverflow, setBioOverflow] = useState(false);
   const bioRef = useRef(null);
 
-  // 1) lade Person & Credits
+  // Person & Credits laden
     useEffect(() => {
     fetchPersonAndCredits(id, language);                           
     return () => clearPerson();
   }, [id, language, fetchPersonAndCredits, clearPerson]);  
 
-  // 2) beim Erhalt der Credits: batch-load der AccountStates
+  // beim Erhalt der Credits: batch-load der AccountStates
   useEffect(() => {
     if (
       !isAuthenticated ||
@@ -62,7 +61,7 @@ export default function SingleArtistPage() {
     getBatchAccountStates(items, sessionId);
   }, [credits, isAuthenticated, sessionId, getBatchAccountStates]);
 
-  // 3) Bio Overflow prüfen
+  // Bio Overflow prüfen
   useEffect(() => {
     const el = bioRef.current;
     if (!el) {

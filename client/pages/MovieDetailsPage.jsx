@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMovies } from '../contexts/MovieContext';
@@ -161,7 +160,6 @@ const MovieDetailsPage = () => {
       "Clip",
     ]
 
-    // Try to find trailer by priority
     for (const priority of trailerPriority) {
       const trailer = youtubeVideos.find(
         (video) =>
@@ -171,13 +169,12 @@ const MovieDetailsPage = () => {
       if (trailer) return trailer
     }
 
-    // If no official trailer found, look for any trailer
     const anyTrailer = youtubeVideos.find((video) => video.type === "Trailer" || video.type === "Teaser")
 
     return anyTrailer || youtubeVideos[0]
   }
 
-  // Function to fetch age certification
+  //fetching age certification
   const fetchCertification = async (movieId) => {
     try {
       const response = await getMovieReleaseDates(movieId)
@@ -242,7 +239,6 @@ const MovieDetailsPage = () => {
         setKeywords(keywordData.keywords || [])
       } catch (err) {
         console.error("Error fetching movie details:", err)
-        // Set movie to an empty object to break the loading state
         setMovie({})
       }
     }
@@ -362,7 +358,6 @@ const MovieDetailsPage = () => {
       return `${hours}h ${mins}m`
     }
 
-    // Get age rating info with proper formatting
     const ageRatingInfo = getAgeRatingInfo(certification, region)
 
     return {
@@ -384,7 +379,6 @@ const MovieDetailsPage = () => {
       backgroundUrl: backdropUrl,
       posterUrl: posterUrl,
       crew: sortedCrewMembers,
-      // Pass the official trailer data instead of just a URL
       trailer: officialTrailer
         ? {
             youtubeId: officialTrailer.key,

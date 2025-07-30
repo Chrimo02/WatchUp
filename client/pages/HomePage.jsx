@@ -110,13 +110,11 @@ const HomePage = () => {
       }
     };
 
-    // Only load if we have data to check
     const hasData = trendingMovies.length > 0 || popularMovies.length > 0 || 
                    topRatedMovies.length > 0 || popularTVShows.length > 0 || 
                    topRatedTVShows.length > 0 || airingTodayTVShows.length > 0;
 
     if (hasData) {
-      // Add a small delay to ensure all data is loaded
       const timeoutId = setTimeout(() => {
         loadAccountStates();
       }, 500);

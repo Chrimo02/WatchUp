@@ -1,4 +1,3 @@
-// src/pages/DiscoveryPage.jsx
 import React, {
   useState, useEffect, useCallback, useRef, Fragment,
 } from 'react'
@@ -47,12 +46,10 @@ export default function DiscoveryPage() {
 
   const fetchedPages = useRef(new Set())
 
-  // Refs für Infinite Scroll + Grid-Row-Height
   const gridRef     = useRef(null)
   const sentinelRef = useRef(null)
   const [rowH, setRowH] = useState(null)
 
-  // Refs für Click-Away auf MovieCardMenu
   const cardRefs = useRef({})
   const setMenuRef = id => el => {
     if (el) cardRefs.current[id] = el
@@ -78,7 +75,6 @@ export default function DiscoveryPage() {
     popularity_desc:'popularity.desc',     popularity_asc:'popularity.asc',
   }[sortOption]
 
-  /* ---------- Datenzustand ---------------- */
   const [page, setPage]              = useState(1)
   const [totalResults, setTotal]     = useState(0)
   const [movies, setMovies]          = useState([])
@@ -88,9 +84,6 @@ export default function DiscoveryPage() {
   const [viewMode, setViewMode]      = useState('grid')
   const [menuOpenFor, setMenuOpenFor] = useState(null)
 
-  /* -------------------------------------------------------------------- */
-  /* ONE-PAGE LOADER – lädt Seite p und hängt an                         */
-  /* -------------------------------------------------------------------- */
   const fetchPage = useCallback(async (p) => {
     if (loadingPage)            return
     if (fetchedPages.current.has(p)) return
@@ -123,7 +116,6 @@ export default function DiscoveryPage() {
         if (p >= total_pages) setHasMore(false)
       }
 
-      /* 2) Enrich mit Laufzeit + Freigabe */
       const enriched = await Promise.all(raw.map(async m => {
         try {
           const det      = await getMovieDetailsWithLanguage(m.id, language)
@@ -137,7 +129,7 @@ export default function DiscoveryPage() {
         }
       }))
 
-      /* 3) Provider-Logos holen */
+      //Provider-Logos holen
       const provPairs = await Promise.all(enriched.map(async m => {
         try {
           const { data } = await getMovieWatchProviders(m.id)
@@ -147,14 +139,13 @@ export default function DiscoveryPage() {
         }
       }))
 
-      /* 4) Account-States, falls angemeldet */
+      //Account-States, falls angemeldet
       if (isAuthenticated && sessionId && enriched.length) {
         await getBatchAccountStates(
           enriched.map(i => ({ id: i.id, type: 'movie' })), sessionId
         )
       }
 
-      /* 5) Commit – deduplizieren nach ID */
       setMovies(prev => {
         const map = new Map(prev.map(m => [m.id, m]))
         enriched.forEach(m => map.set(m.id, m))
@@ -176,16 +167,13 @@ export default function DiscoveryPage() {
     isAuthenticated, sessionId, getBatchAccountStates,
   ])
 
-  /* Reset bei Filter/Sort-Wechsel */
   useEffect(() => {
     setMovies([]); setProviders({}); setPage(1); setHasMore(true)
     fetchedPages.current.clear()
   }, [sortOption, filters, preset, region, language])
 
-  /* Initiales Laden & Pagination */
   useEffect(() => { fetchPage(page) }, [page, fetchPage])
 
-  /* Infinite Scroll */
   useEffect(() => {
     if (!hasMore) return
     const io = new IntersectionObserver(entries => {
@@ -196,7 +184,6 @@ export default function DiscoveryPage() {
     return () => { if (el) io.unobserve(el) }
   }, [hasMore, loadingPage])
 
-  /* Gleichmäßige Grid-Row-Höhe */
   useEffect(() => {
     if (viewMode !== 'grid') return
     const measure = () => {
@@ -212,7 +199,6 @@ export default function DiscoveryPage() {
     return () => window.removeEventListener('resize', measure)
   }, [movies, bookmarkLoadingStates, viewMode])
 
-  /* Click-Away für MovieCardMenu */
   useEffect(() => {
     if (menuOpenFor == null) return
     const handleClickOutside = e => {
@@ -225,7 +211,6 @@ export default function DiscoveryPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [menuOpenFor])
 
-  /* Render-Hilfen */
   const headerText = sortOption === 'trending' ? 'Trending Titles' : 'Discover Titles'
   const movieItems = movies.map(m => ({
     id: m.id,
@@ -239,10 +224,8 @@ export default function DiscoveryPage() {
     isLoading: bookmarkLoadingStates.has(m.id),
   }))
 
-  /* JSX */
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      {/* HERO */}
       <header
         className="relative h-64 bg-cover bg-center flex items-center justify-center"
         style={{ backgroundImage: `url(${chairsBg})` }}
@@ -253,7 +236,7 @@ export default function DiscoveryPage() {
           {movies.length.toLocaleString()} / {totalResults.toLocaleString()} titles
         </div>
         <div className="absolute bottom-4 right-8 flex items-center space-x-3">
-          {/* FILTER */}
+          {/* Filter */}
           <Popover className="relative">
             <Popover.Button className="flex items-center gap-1 bg-gray-800 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-600">
               <FilterIcon className="w-5 h-5 text-white" />
@@ -264,12 +247,12 @@ export default function DiscoveryPage() {
               <AdvancedSearch onSearch={f => { setFilters(f); setPage(1) }} />
             </Popover.Panel>
           </Popover>
-          {/* SORT */}
+          {/* Sort */}
           <SortSelect
             value={sortOption}
             onChange={val => { setSortOption(val); setPage(1) }}
           />
-          {/* VIEW TOGGLE */}
+          {/* View toggle */}
           <button
             onClick={() => setViewMode('list')}
             className={`p-2 rounded ${viewMode === 'list' ? 'bg-white text-black' : 'bg-gray-800'}`}
@@ -286,7 +269,7 @@ export default function DiscoveryPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* GRID VIEW */}
+        {/* Grid view */}
         {viewMode === 'grid' && (
           movies.length === 0 && !loadingPage
             ? <p className="text-center text-gray-400 py-10">No movies found.</p>
@@ -329,8 +312,6 @@ export default function DiscoveryPage() {
                           />
                         </div>
                       )}
-
-                      {/* Sentinel fürs List/Grid-Infinite-Scroll */}
                       {idx === movieItems.length - 1 && <div ref={sentinelRef} />}
                     </div>
                   </Fragment>
@@ -339,7 +320,7 @@ export default function DiscoveryPage() {
             )
         )}
 
-        {/* LIST VIEW */}
+        {/* List view */}
         {viewMode === 'list' && (
           movieItems.length === 0
             ? <p className="text-center text-gray-400 py-10">No movies found.</p>
