@@ -1,4 +1,3 @@
-// src/pages/DiscoverySeriesPage.jsx
 import React, {
   useState,
   useEffect,
@@ -52,7 +51,6 @@ export default function DiscoverySeriesPage() {
   const { handleBookmarkToggle, bookmarkLoadingStates } = useBookmarkToggle();
   const { language, region } = useLanguage();
 
-  // Certification ≤ PG-13/FSK 12 etc.
   const certLTE = (
     { US:'PG-13', DE:'FSK 12', GB:'12', FR:'12',
       ES:'13',   CA:'PG-13',  AU:'PG', JP:'G',  KR:'12' }
@@ -291,7 +289,7 @@ export default function DiscoverySeriesPage() {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      {/* HERO */}
+      {/* Hero */}
       <header
         className="relative h-64 bg-cover bg-center flex items-center justify-center"
         style={{ backgroundImage: `url(${chairsBg})` }}
@@ -334,7 +332,7 @@ export default function DiscoverySeriesPage() {
         </div>
       </header>
 
-      {/* CONTENT */}
+      {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {viewMode==='grid' ? (
           showItems.length===0 && !loadingPage ? (
@@ -398,9 +396,7 @@ export default function DiscoverySeriesPage() {
                     onBookmarkToggle={handleBookmarkToggle}
                     onFavorite={() => handleFavoriteToggle(s.id)}
                     isFavorite={s.isFavorite}
-                    // ← instead of rating immediately, open the modal
                     onRate={id => openRateModal(id, s.title, 'tv', s.myRating)}
-                    // ← let ListComponent know the user’s own rating
                     currentRating={s.myRating}
                     streamingPlatforms={[
                       ...(providersMap[s.id]?.flatrate||[]),

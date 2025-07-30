@@ -22,9 +22,7 @@ const NotFound = () => {
 
       {/* Main content container */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-8 h-screen flex items-center justify-center">
-        {/* Combined image container */}
         <div className="relative w-full h-full flex items-center justify-center">
-          {/* Joker background image - made smaller */}
           <div className="absolute inset-0 hidden lg:flex items-center justify-center -ml-44">
             <img
               src={JokerImage || "/placeholder.svg"}
@@ -37,7 +35,7 @@ const NotFound = () => {
             />
           </div>
 
-          {/* 404 text image overlay - made bigger and repositioned */}
+          {/* 404 text image overlay */}
           <div className="relative z-20 flex items-center justify-center lg:ml-48">
             <img
               src={Text404Image || "/placeholder.svg"}
@@ -49,7 +47,7 @@ const NotFound = () => {
             />
           </div>
 
-          {/* Back to home button positioned at bottom */}
+          {/* Back to home button */}
           <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 text-center z-30">
             <button
               onClick={() => (window.location.href = "/")}
@@ -63,7 +61,6 @@ const NotFound = () => {
 
       {/* Additional atmospheric effects */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-        {/* Subtle red glow effects */}
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-red-600/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/3 right-1/4 w-24 h-24 bg-red-700/10 rounded-full blur-2xl"></div>
       </div>

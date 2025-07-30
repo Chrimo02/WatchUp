@@ -1,4 +1,3 @@
-// src/pages/SearchResultsPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams }    from 'react-router-dom';
 import { useMovies }          from '../contexts/MovieContext';
@@ -34,7 +33,7 @@ export default function SearchResultsPage() {
   const [filter, setFilter]         = useState('all');
   const [items, setItems]           = useState([]);
   const [total, setTotal]           = useState(0);
-  const [allTotal, setAllTotal]     = useState(0);      // NEU: Gesamtzahl unabhängig vom Filter
+  const [allTotal, setAllTotal]     = useState(0);     
   const [movieTotal, setMovieTotal] = useState(0);
   const [tvTotal, setTvTotal]       = useState(0);
   const [personTotal, setPersonTotal] = useState(0);
@@ -42,12 +41,10 @@ export default function SearchResultsPage() {
   const [loading, setLoading]       = useState(false);
   const [watchProvidersMap, setWatchProvidersMap] = useState({});
 
-  // 1) Reset page on new query or filter
   useEffect(() => {
     setPage(1);
   }, [query, filter]);
 
-  // 2) Fetch Gesamt-Anzahl („All“) einmal pro Query
   useEffect(() => {
     let cancelled = false;
     if (!query) {
@@ -65,7 +62,7 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMultiByQuery]);
 
-  // 3) Hauptsuche je nach Filter
+  //Hauptsuche je nach Filter
   useEffect(() => {
     let cancelled = false;
     if (!query) {
@@ -89,7 +86,6 @@ export default function SearchResultsPage() {
           data.results = data.results.map(i => ({ ...i, media_type: 'person' }));
         } else {
           data = await searchMultiByQuery(query, page);
-          // data.results ist bereits nach Populärität sortiert
         }
         if (!cancelled) {
           setItems(data.results || []);
@@ -114,7 +110,7 @@ export default function SearchResultsPage() {
     searchMultiByQuery,
   ]);
 
-  // 4) Counts für Movie/TV/Person
+  //Counts für Movie/TV/Person
   useEffect(() => {
     let cancelled = false;
     if (!query) {
@@ -142,7 +138,7 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [query, searchMoviesByQuery, searchTVShowsByQuery, searchPeopleByQuery]);
 
-  // 5) Watch-Providers für Movies/TV
+  //Watch-Providers für Movies/TV
   useEffect(() => {
     let cancelled = false;
     const relevant = items.filter(i => i.media_type === 'movie' || i.media_type === 'tv');
@@ -173,7 +169,6 @@ export default function SearchResultsPage() {
     return () => { cancelled = true; };
   }, [items, region]);
 
-  // Counts-Objekt: all = allTotal (fix), others dynamisch
   const counts = {
     all:    allTotal,
     movie:  movieTotal,
@@ -187,7 +182,7 @@ export default function SearchResultsPage() {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      {/* HEADER */}
+      {/* Header */}
       <div
         className="relative h-64 bg-cover bg-center flex flex-col items-center justify-center"
         style={{ backgroundImage: `url(${chairsBg})` }}
@@ -224,7 +219,7 @@ export default function SearchResultsPage() {
         </div>
       </div>
 
-      {/* CONTENT */}
+      {/* Content */}
       <div className="px-4 py-8 space-y-6">
         {loading
           ? <div className="text-center py-10">Loading…</div>
@@ -272,7 +267,7 @@ export default function SearchResultsPage() {
             )
         }
 
-        {/* PAGINATION */}
+        {/* Pagination */}
         {total > pageSize && (
           <div className="flex justify-center items-center gap-4 pt-4">
             <button

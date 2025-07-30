@@ -1,4 +1,3 @@
-// src/pages/DiscoveryMoviesPage.jsx
 import React, { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { Popover } from '@headlessui/react';
 import { ChevronDown } from 'lucide-react';
@@ -135,7 +134,6 @@ const openListModal = id => setListTargetId(id);
       let batchStates = {};    
       let raw = [], total = 0;
 
-      // Split out client‐side only filters
       const {
         watchlistFilter,
         ratingsFilter,
@@ -163,7 +161,6 @@ const openListModal = id => setListTargetId(id);
         if (p >= total_pages) setHasMore(false);
       }
 
-      // Enrich with details & runtime
       const enriched = await Promise.all(raw.map(async m => {
         try {
           const det = await getMovieDetailsWithLanguage(m.id, language);
@@ -194,7 +191,7 @@ const openListModal = id => setListTargetId(id);
         );
       }
 
-            // Client‐side filtering
+      // Client‐side filtering
       let filtered = enriched;
 
       // watchlist filter
@@ -221,13 +218,10 @@ const openListModal = id => setListTargetId(id);
         });
       }
 
-      // hide “Not Rated” if an age‐rating filter is active
-      // apiParams comes from: const { watchlistFilter, ratingsFilter, ...apiParams } = filters;
       if (apiParams['certification.lte']) {
         filtered = filtered.filter(m => m.certification !== 'NR');
       }
 
-      // merge filtered results into state
       setMovies(prev => {
         const map = new Map(prev.map(m => [m.id, m]));
         filtered.forEach(m => map.set(m.id, m));
@@ -439,9 +433,7 @@ const openListModal = id => setListTargetId(id);
                      }
                     onAddToList={() => openListModal(m.id)}
                     isFavorite={m.isFavorite}
-                    // instead of immediately rating, open the modal:
                     onRate={id => openRateModal(id, m.title, 'movie', m.myRating)}
-                    // pass down the user's own rating:
                     currentRating={m.myRating}
 
                     streamingPlatforms={[
@@ -472,7 +464,6 @@ const openListModal = id => setListTargetId(id);
           </div>
         )}
       </main>
-      {/* ───────────────────── RatingModal ───────────────────── */}
 <RatingModal
   isOpen={!!ratingTarget}
   title={ratingTarget?.title ?? ''}
@@ -484,7 +475,6 @@ const openListModal = id => setListTargetId(id);
   onClearRating={clearRating}
 />
 
-{/* ─────────────────── Add‑to‑List Modal ───────────────── */}
 <AddToListModal
   isOpen={listTargetId !== null}
   onClose={() => setListTargetId(null)}

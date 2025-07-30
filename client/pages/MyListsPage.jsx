@@ -35,19 +35,16 @@ const MyListsPage = () => {
   
   const [showCreateModal, setShowCreateModal] = useState(false)
   const initial = state?.initialView ?? 'overview'
-  // View state
-  const [currentView, setCurrentView] = useState(initial) // 'overview', 'watchlist', 'favorites', 'rated'
-  const [activeFilter, setActiveFilter] = useState("all") // 'all', 'movies', 'tv'
 
-  // Loading states for individual lists
+  const [currentView, setCurrentView] = useState(initial)
+  const [activeFilter, setActiveFilter] = useState("all") 
+
   const [watchlistLoading, setWatchlistLoading] = useState(false)
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [ratedLoading, setRatedLoading] = useState(false)
 
-  // Delete loading states
   const [deleteLoading, setDeleteLoading] = useState({})
 
-  // Main lists data
   const [watchlistData, setWatchlistData] = useState({
     movies: [],
     tvShows: [],
@@ -76,10 +73,8 @@ const MyListsPage = () => {
     hasMoreTV: true,
   })
 
-  // Custom lists data
   const [customLists, setCustomLists] = useState([])
 
-  // Bookmark states
   const [bookmarkStates, setBookmarkStates] = useState({})
   const [bookmarkLoading, setBookmarkLoading] = useState({})
 
@@ -461,7 +456,6 @@ const MyListsPage = () => {
   const handleBackToOverview = () => {
     setCurrentView("overview")
     setActiveFilter("all")
-    // Refresh custom lists when returning to overview
     if (isAuthenticated && user && sessionId) {
       fetchCustomLists()
     }

@@ -1,4 +1,3 @@
-// src/pages/PopularPeople.jsx
 import React, { useEffect, useState } from 'react';
 import PeopleListView from '../components/PeopleListView';
 import PeopleGridView from '../components/PeopleGridView';
@@ -48,7 +47,7 @@ export default function PopularPeople() {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      {/* HEADER BANNER */}
+      {/* Header Banner */}
       <div
         className="relative h-64 bg-cover bg-center flex items-center justify-center"
         style={{ backgroundImage: `url(${chairsBg})` }}
@@ -76,7 +75,7 @@ export default function PopularPeople() {
         </div>
       </div>
 
-      {/* CONTENT */}
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {viewMode === 'list' ? (
           <PeopleListView people={popularPeople} />
@@ -84,7 +83,7 @@ export default function PopularPeople() {
           <PeopleGridView people={popularPeople} />
         )}
 
-        {/* PAGINATION */}
+        {/* Pagination */}
         <div className="flex justify-center items-center gap-4">
           <button
             onClick={() => setPage(p => Math.max(p - 1, 1))}
