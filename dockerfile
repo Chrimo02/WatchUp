@@ -20,6 +20,9 @@ RUN npm run build:client
 # ── Stage 2: Serve with nginx ─────────────────────────────────────────────
 FROM nginx:alpine
 
+# overwrite default config
+COPY nginx.conf /etc/nginx/nginx.conf
+
 COPY --from=builder /app/dist/spa /usr/share/nginx/html
 
 EXPOSE 80
