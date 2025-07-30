@@ -398,7 +398,6 @@ export default function DiscoverySeriesPage() {
                     onBookmarkToggle={handleBookmarkToggle}
                     onFavorite={() => handleFavoriteToggle(s.id)}
                     isFavorite={s.isFavorite}
-                    onAddToList={() => addToWatchlist(user.id, sessionId, s.id, 'tv', !isInWatchlist(s.id, 'tv'))}
                     // ← instead of rating immediately, open the modal
                     onRate={id => openRateModal(id, s.title, 'tv', s.myRating)}
                     // ← let ListComponent know the user’s own rating
