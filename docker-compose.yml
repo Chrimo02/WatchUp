@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        VITE_TMDB_API_KEY: 854166e2663dd398c32c659dbe1fe8f7
-        VITE_OMDB_API_KEY: b056365e
+        VITE_TMDB_API_KEY: ${VITE_TMDB_API_KEY}
+        VITE_OMDB_API_KEY: ${VITE_OMDB_API_KEY}
     ports:
       - "3000:80"
